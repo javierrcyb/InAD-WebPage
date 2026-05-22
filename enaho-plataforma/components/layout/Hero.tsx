@@ -1,0 +1,23 @@
+export default function Hero() {
+  return (
+    <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-4"
+      style={{ background: 'rgba(245,244,240,0.9)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(74,151,154,0.15)' }}>
+      <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, color: 'var(--navy)', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+        <span style={{ width: 10, height: 10, background: 'var(--teal)', borderRadius: '50%', display: 'inline-block' }} />
+        ENAHO · Inclusión Digital
+      </div>
+      <div className="flex items-center gap-6">
+        <a href="#info" className="text-sm font-medium" style={{ color: 'var(--gray)', textDecoration: 'none' }}>¿Qué es?</a>
+        <a href="#evaluacion" className="text-sm font-medium" style={{ color: 'var(--gray)', textDecoration: 'none' }}>Evaluación</a>
+        <a
+          href="https://iinei.inei.gob.pe/iinei/srienaho/"
+          target="_blank"
+          className="text-sm font-semibold px-4 py-2 rounded-lg transition-all"
+          style={{ background: 'var(--navy)', color: 'white', textDecoration: 'none' }}
+        >
+          Portal INEI →
+        </a>
+      </div>
+    </nav>
+  )
+}
