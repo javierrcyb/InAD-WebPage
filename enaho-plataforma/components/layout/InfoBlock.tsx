@@ -1,15 +1,10 @@
 const features = [
-    {
-        icon: '📊',
-        color: 'rgba(74,151,154,0.12)',
-        title: 'Metodología ENAHO oficial',
-        desc: 'Preguntas directamente extraídas del módulo P316 aplicado a nivel nacional por el INEI.',
-    },
+
     {
         icon: '🔒',
         color: 'rgba(86,180,217,0.12)',
         title: 'Datos anónimos y protegidos',
-        desc: 'Tus respuestas se almacenan de forma anonimizada conforme a la Ley N° 29733.',
+        desc: 'Tus respuestas se almacenan de forma anonimizada.',
     },
     {
         icon: '🎯',
@@ -34,12 +29,36 @@ export default function InfoBlock() {
             <div style={{ maxWidth: 1100, margin: '0 auto' }}>
 
                 {/* Header */}
-                <p style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--coral)', marginBottom: '0.5rem', fontFamily: 'Syne, sans-serif' }}>
-                    ¿Qué es este índice?
-                </p>
-                <h2 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: 'clamp(1.8rem, 2.5vw, 2.4rem)', color: 'var(--navy)', letterSpacing: '-0.02em', marginBottom: '3rem' }}>
-                    Basado en metodología oficial ENAHO · INEI
+                <h2 style={{
+                    fontFamily: 'Syne, sans-serif',
+                    fontWeight: 700,
+                    fontSize: 'clamp(2.2rem, 5vw, 4rem)',
+                    color: 'var(--navy)',
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1.1,
+                    marginBottom: '3rem',
+                    textRendering: 'optimizeLegibility',
+                    WebkitFontSmoothing: 'antialiased',
+                }}>
+                    Índice de Actividad Digital (InAD)
                 </h2>
+
+                <p
+  style={{
+    fontFamily: 'Syne, sans-serif',
+    fontWeight: 700,
+    fontSize: '0.75rem',
+    letterSpacing: '0.08em',
+    lineHeight: 1.1,
+    textTransform: 'uppercase',
+    color: 'var(--coral)',
+    marginBottom: '0.5rem',
+    textRendering: 'optimizeLegibility',
+    WebkitFontSmoothing: 'antialiased',
+  }}
+>
+  ¿Qué es este índice?
+</p>
 
                 {/* Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
@@ -47,16 +66,14 @@ export default function InfoBlock() {
                     {/* Left — texto */}
                     <div>
                         <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>
-                            El <strong style={{ color: '#1A1A2E' }}>Índice de Inclusión Digital</strong> es una herramienta de diagnóstico construida sobre el módulo P316 de la Encuesta Nacional de Hogares (ENAHO), levantada por el INEI. Evalúa en qué medida las personas acceden, usan y aprovechan las tecnologías de información y comunicación.
+                            El <strong style={{ color: '#1A1A2E' }}>Índice de Inclusión Digital </strong> en la Encuesta Nacional de Hogares (ENAHO), mide cómo las personas usan y aprovechan internet en su vida diaria. Basado en datos de la ENAHO del INEI, evalúa actividades como educación, banca digital, trámites, comercio electrónico y acceso a servicios digitales.
                         </p>
 
                         <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>
-                            No mide únicamente si tienes internet, sino <strong style={{ color: '#1A1A2E' }}>cómo lo usas</strong>: si realizas operaciones bancarias, si accedes a servicios del Estado, si te capacitas o si participas en el comercio digital.
-                        </p>
+                            Más allá de tener conexión a internet, el índice analiza el nivel de participación digital de cada persona, desde usos básicos hasta actividades más avanzadas.                        </p>
 
-                        <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280' }}>
-                            Al completar el formulario recibirás un resultado personalizado con recursos concretos para avanzar hacia una mayor inclusión digital.
-                        </p>
+                        <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>
+                            Al finalizar la evaluación recibirás un resultado personalizado con recursos y recomendaciones para fortalecer tus competencias digitales.                        </p>
 
                         <a
                             href="#evaluacion"
