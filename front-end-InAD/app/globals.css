@@ -1,0 +1,22 @@
+
+
+@import "tailwindcss";
+
+:root {
+  --teal:   #4A979A;
+  --coral:  #D36356;
+  --orange: #F58231;
+  --navy:   #0A3A6B;
+  --gray:   #999999;
+  --sky:    #56B4D9;
+  --blue:   #0072B2;
+  --bg:     #F5F4F0;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background-color: var(--bg);
+  color: #1A1A2E;
+} 
