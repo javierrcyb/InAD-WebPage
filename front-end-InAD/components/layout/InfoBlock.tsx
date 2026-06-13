@@ -65,7 +65,7 @@ export default function InfoBlock() {
                 {/* Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
 
-                    {/* Left — texto */}
+                    {/* texto izquiera */}
                     <div>
                         <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>
                             El <strong style={{ color: '#1A1A2E' }}>Índice de Inclusión Digital </strong> en la Encuesta Nacional de Hogares (ENAHO), mide cómo las personas usan y aprovechan internet en su vida diaria. Basado en datos de la ENAHO del INEI, evalúa actividades como educación, banca digital, trámites, comercio electrónico y acceso a servicios digitales.
@@ -97,7 +97,7 @@ export default function InfoBlock() {
                         </a>
                     </div>
 
-                    {/* Right — features */}
+                    {/* texto derecha    */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {features.map((f) => (
                             <div

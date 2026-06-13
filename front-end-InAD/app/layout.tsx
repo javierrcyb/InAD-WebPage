@@ -1,11 +1,9 @@
-// ELIMINAR O MODIFICAR
-
 import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Índice de Inclusión Digital — ENAHO',
-  description: 'Evalúa tu nivel de inclusión digital con base en el módulo P316 de la ENAHO del INEI.',
+  title: 'Encuesta InAD',
+  description: 'Evalúa tu nivel de inclusión digital',
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

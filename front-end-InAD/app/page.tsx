@@ -1,13 +1,13 @@
 //DEFINITIVA
 
-import Hero from '@/components/layout/Hero'
+import NavBar from '@/components/layout/NavBar'
 import InfoBlock from '@/components/layout/InfoBlock'
 import FormBlock from '@/components/forms/FormBlock'
 
 export default function HomePage() {
   return (
     <main>
-      <Hero />
+      <NavBar />
       <InfoBlock />
       <FormBlock />
     </main>

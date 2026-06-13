@@ -17,7 +17,7 @@ const PREGUNTAS: { key: keyof FormData['p316']; num: string; texto: string }[] =
   { key: 'p12', num: 'P316.12', texto: 'Descarga de antivirus, aplicativos o software' },
 ]
 
-export default function Step4P316({ data, update }: Props) {
+export default function Step4PForm({ data, update }: Props) {
   const setP316 = (key: keyof FormData['p316'], val: boolean) =>
     update({ p316: { ...data.p316, [key]: val } })
 

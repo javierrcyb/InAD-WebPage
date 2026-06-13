@@ -1,13 +1,12 @@
-// VER QUE HACER CON ESTO
-
 'use client'
 
 import { useState } from 'react'
 import { FormData, INITIAL_FORM } from '@/types'
-import Step1Perfil from './steps/Step1Perfil'
-import Step2Educacion from './steps/Step2Education'
-import Step3Ubicacion from './steps/Step3Ubicacion'
-import Step4P316 from './steps/Step4P316'
+import Step1Form from './steps/Step1Form'
+import Step2Form from './steps/Step2Form'
+import Step3Form from './steps/Step3Form'
+import Step4Form from './steps/Step4Form'
+import { stepSchemas } from '@/lib/validations/form'
 
 const STEPS = ['Perfil personal', 'Educación e ingresos', 'Ubicación', 'Actividades digitales']
 
@@ -15,14 +14,37 @@ export default function FormBlock() {
     const [current, setCurrent] = useState(0)
     const [data, setData] = useState<FormData>(INITIAL_FORM)
     const [submitted, setSubmitted] = useState(false)
+    const [stepError, setStepError] = useState('')
 
-    const update = (fields: Partial<FormData>) =>
+    const update = (fields: Partial<FormData>) => {
+        setStepError('')
         setData(prev => ({ ...prev, ...fields }))
+    }
 
-    const next = () => setCurrent(s => Math.min(s + 1, STEPS.length - 1))
+    const currentIsValid = stepSchemas[current].safeParse(data).success
+
+    const next = () => {
+        const result = stepSchemas[current].safeParse(data)
+
+        if (!result.success) {
+            setStepError('Completa todas las respuestas para continuar.')
+            return
+        }
+
+        setStepError('')
+        setCurrent(s => Math.min(s + 1, STEPS.length - 1))
+    }
     const back = () => setCurrent(s => Math.max(s - 1, 0))
 
     const submit = async () => {
+        const result = stepSchemas[current].safeParse(data)
+
+        if (!result.success) {
+            setStepError('Completa todas las respuestas para continuar.')
+            return
+        }
+
+        setStepError('')
         // TODO: POST /api/responses
         console.log('Enviando:', data)
         setSubmitted(true)
@@ -105,11 +127,17 @@ export default function FormBlock() {
                                 Todas las preguntas son obligatorias.
                             </p>
 
+                            {stepError && (
+                                <p style={{ marginBottom: '1rem', color: 'var(--coral)', fontSize: '0.9rem', fontWeight: 600 }}>
+                                    {stepError}
+                                </p>
+                            )}
+
                             {/* Steps */}
-                            {current === 0 && <Step1Perfil data={data} update={update} />}
-                            {current === 1 && <Step2Educacion data={data} update={update} />}
-                            {current === 2 && <Step3Ubicacion data={data} update={update} />}
-                            {current === 3 && <Step4P316 data={data} update={update} />}
+                            {current === 0 && <Step1Form data={data} update={update} />}
+                            {current === 1 && <Step2Form data={data} update={update} />}
+                            {current === 2 && <Step3Form data={data} update={update} />}
+                            {current === 3 && <Step4Form data={data} update={update} />}
 
                             {/* Navigation */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
@@ -132,11 +160,14 @@ export default function FormBlock() {
 
                                 <button
                                     onClick={current === STEPS.length - 1 ? submit : next}
+                                    disabled={!currentIsValid}
                                     style={{
                                         padding: '0.8rem 1.8rem', borderRadius: 8, border: 'none',
                                         background: current === STEPS.length - 1 ? 'var(--teal)' : 'var(--navy)',
                                         color: 'white', fontFamily: 'DM Sans, sans-serif',
-                                        fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
+                                        fontSize: '0.9rem', fontWeight: 600,
+                                        cursor: currentIsValid ? 'pointer' : 'not-allowed',
+                                        opacity: currentIsValid ? 1 : 0.55,
                                     }}
                                 >
                                     {current === STEPS.length - 1 ? 'Enviar evaluación ✓' : 'Siguiente →'}
