@@ -32,7 +32,7 @@ export default function NavBar() {
             </div>
             <div className="flex items-center gap-6">
                 <a href="#info" className="text-sm font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>¿Qué es?</a>
-                <a href="#evaluacion" className="text-sm font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>Evaluación</a>
+                <a href="#verificacion" className="text-sm font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>Evaluación</a>
                 <a
                     href="https://neurometrics.la/"
                     target="_blank"

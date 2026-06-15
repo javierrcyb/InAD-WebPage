@@ -1,25 +1,124 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { FormData, INITIAL_FORM } from '@/types'
 import Step1Form from './steps/Step1Form'
 import Step2Form from './steps/Step2Form'
 import Step3Form from './steps/Step3Form'
 import Step4Form from './steps/Step4Form'
 import { stepSchemas } from '@/lib/validations/form'
+import { completeFormResponse, getFormResponse, saveFormDraft } from '@/lib/supabase/responses'
+import { createBrowserSupabaseClient } from '@/lib/supabase/client'
+import { Loader2 } from 'lucide-react'
+
+type VerifiedUser = {
+    id: string
+    email: string
+    provider?: string
+}
+
+type FormBlockProps = {
+    verifiedUser: VerifiedUser
+}
 
 const STEPS = ['Perfil personal', 'Educación e ingresos', 'Ubicación', 'Actividades digitales']
 
-export default function FormBlock() {
+function mergeFormData(source: Partial<FormData> | null | undefined): FormData {
+	return {
+		...INITIAL_FORM,
+		...source,
+		p316: {
+			...INITIAL_FORM.p316,
+			...(source?.p316 ?? {}),
+		},
+	}
+}
+
+function isFormComplete(formData: FormData) {
+	return stepSchemas.every((schema) => schema.safeParse(formData).success)
+}
+
+function getResumeStep(formData: FormData) {
+	for (let index = 0; index < stepSchemas.length; index += 1) {
+		if (!stepSchemas[index].safeParse(formData).success) {
+			return index
+		}
+	}
+
+	return STEPS.length - 1
+}
+
+export default function FormBlock({ verifiedUser }: FormBlockProps) {
     const [current, setCurrent] = useState(0)
     const [data, setData] = useState<FormData>(INITIAL_FORM)
     const [submitted, setSubmitted] = useState(false)
     const [stepError, setStepError] = useState('')
+    const [submitting, setSubmitting] = useState(false)
+    const [submitError, setSubmitError] = useState('')
+    const [hydrated, setHydrated] = useState(false)
+    const [completed, setCompleted] = useState(false)
+
+    useEffect(() => {
+        const supabase = createBrowserSupabaseClient()
+        let mounted = true
+
+        const loadResponse = async () => {
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (!mounted) {
+                return
+            }
+
+            if (!user || user.id !== verifiedUser.id) {
+                setHydrated(true)
+                return
+            }
+
+            const response = await getFormResponse()
+
+            if (!mounted) {
+                return
+            }
+
+            if (response.success && response.data) {
+                const savedData = mergeFormData(response.data)
+
+                setData(savedData)
+                    setCompleted(Boolean(response.completed))
+
+                    if (response.completed || isFormComplete(savedData)) {
+                    setSubmitted(true)
+                } else {
+                    setCurrent(getResumeStep(savedData))
+                }
+            }
+
+            setHydrated(true)
+        }
+
+        void loadResponse()
+
+        return () => {
+            mounted = false
+        }
+    }, [verifiedUser.id])
 
     const update = (fields: Partial<FormData>) => {
         setStepError('')
         setData(prev => ({ ...prev, ...fields }))
     }
+
+    useEffect(() => {
+        if (!hydrated || submitted || completed) {
+            return
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            void saveFormDraft(data)
+        }, 700)
+
+        return () => window.clearTimeout(timeoutId)
+    }, [completed, data, hydrated, submitted])
 
     const currentIsValid = stepSchemas[current].safeParse(data).success
 
@@ -45,9 +144,21 @@ export default function FormBlock() {
         }
 
         setStepError('')
-        // TODO: POST /api/responses
-        console.log('Enviando:', data)
+        setSubmitting(true)
+        setSubmitError('')
+
+        const response = await completeFormResponse(data)
+
+        if (!response.success) {
+            setSubmitError(response.error || 'Error al enviar la evaluación')
+            setSubmitting(false)
+            return
+        }
+
+        // Éxito - mostrar pantalla de confirmación
         setSubmitted(true)
+        setCompleted(true)
+        setSubmitting(false)
     }
 
     return (
@@ -133,6 +244,12 @@ export default function FormBlock() {
                                 </p>
                             )}
 
+                            {submitError && (
+                                <p style={{ marginBottom: '1rem', color: 'var(--coral)', fontSize: '0.9rem', fontWeight: 600 }}>
+                                    {submitError}
+                                </p>
+                            )}
+
                             {/* Steps */}
                             {current === 0 && <Step1Form data={data} update={update} />}
                             {current === 1 && <Step2Form data={data} update={update} />}
@@ -160,17 +277,25 @@ export default function FormBlock() {
 
                                 <button
                                     onClick={current === STEPS.length - 1 ? submit : next}
-                                    disabled={!currentIsValid}
+                                    disabled={!currentIsValid || submitting}
                                     style={{
                                         padding: '0.8rem 1.8rem', borderRadius: 8, border: 'none',
                                         background: current === STEPS.length - 1 ? 'var(--teal)' : 'var(--navy)',
                                         color: 'white', fontFamily: 'DM Sans, sans-serif',
                                         fontSize: '0.9rem', fontWeight: 600,
-                                        cursor: currentIsValid ? 'pointer' : 'not-allowed',
-                                        opacity: currentIsValid ? 1 : 0.55,
+                                        cursor: (currentIsValid && !submitting) ? 'pointer' : 'not-allowed',
+                                        opacity: (currentIsValid && !submitting) ? 1 : 0.55,
+                                        display: 'flex', alignItems: 'center', gap: '0.6rem',
                                     }}
                                 >
-                                    {current === STEPS.length - 1 ? 'Enviar evaluación ✓' : 'Siguiente →'}
+                                    {submitting ? (
+                                        <>
+                                            <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                                            Enviando...
+                                        </>
+                                    ) : (
+                                        current === STEPS.length - 1 ? 'Enviar evaluación ✓' : 'Siguiente →'
+                                    )}
                                 </button>
                             </div>
                         </>

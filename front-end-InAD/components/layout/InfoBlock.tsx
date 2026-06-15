@@ -78,7 +78,7 @@ export default function InfoBlock() {
                             Al finalizar la evaluación recibirás un resultado personalizado con recursos y recomendaciones para fortalecer tus competencias digitales.                        </p>
 
                         <a
-                            href="#evaluacion"
+                            href="#verificacion"
                             style={{
                                 display: 'inline-flex',
                                 alignItems: 'center',
@@ -93,7 +93,7 @@ export default function InfoBlock() {
                                 textDecoration: 'none',
                             }}
                         >
-                            Ir a la evaluación ↓
+                            Ir a la verificación ↓
                         </a>
                     </div>
 

@@ -1,15 +1,13 @@
-//DEFINITIVA
-
 import NavBar from '@/components/layout/NavBar'
 import InfoBlock from '@/components/layout/InfoBlock'
-import FormBlock from '@/components/forms/FormBlock'
+import EvaluationFlow from '@/components/forms/EvaluationFlow'
 
 export default function HomePage() {
   return (
     <main>
       <NavBar />
       <InfoBlock />
-      <FormBlock />
+      <EvaluationFlow />
     </main>
   )
 }
