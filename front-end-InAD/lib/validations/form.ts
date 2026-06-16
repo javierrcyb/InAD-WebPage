@@ -1,5 +1,3 @@
-// BORRAR O REEMPLAZAR
-      
 import { z } from 'zod'
 import { FORM_DICTIONARIES } from '@/lib/constants/dictionaries'
 

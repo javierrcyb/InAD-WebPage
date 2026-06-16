@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { LockKeyhole } from 'lucide-react'
 import VerificationGate from '@/components/auth/VerificationGate'
 import FormBlock from './FormBlock'
+import { createBrowserSupabaseClient } from '@/lib/supabase/client'
 
 type VerifiedUser = {
   id: string
@@ -14,11 +15,17 @@ type VerifiedUser = {
 export default function EvaluationFlow() {
   const [verifiedUser, setVerifiedUser] = useState<VerifiedUser | null>(null)
 
-  console.log('EvaluationFlow render — verifiedUser:', verifiedUser) // 👈
+  console.log('EvaluationFlow render — verifiedUser:', verifiedUser) 
 
   const handleVerified = (user: VerifiedUser) => {
-    console.log('onVerified llamado con:', user) // 👈
+    console.log('onVerified llamado con:', user) 
     setVerifiedUser(user)
+  }
+
+  const handleSignOut = async () => {
+    const supabase = createBrowserSupabaseClient()
+    await supabase.auth.signOut()
+    setVerifiedUser(null)
   }
 
   return (
@@ -70,7 +77,7 @@ export default function EvaluationFlow() {
         </div>
       </section>
     ) : (
-      <FormBlock verifiedUser={verifiedUser} />
+      <FormBlock verifiedUser={verifiedUser} onSignOut={handleSignOut} />
     )}
   </>
 )

@@ -53,6 +53,7 @@ export async function getFormResponse() {
 export async function saveFormDraft(formData: FormData) {
 	try {
 		const { supabase, user } = await getAuthenticatedUser()
+		console.log('💾 Guardando draft para:', user.id)
 
 		const { data, error } = await supabase
 			.from('responses')
@@ -70,9 +71,10 @@ export async function saveFormDraft(formData: FormData) {
 			.select()
 
 		if (error) {
+			console.error('Error al guardar:', error)
 			throw error
 		}
-
+		console.log('Draft guardado:', data)
 		return { success: true, data }
 	} catch (error) {
 		const message = error instanceof Error ? error.message : 'Error al guardar la respuesta'

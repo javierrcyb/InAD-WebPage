@@ -19,36 +19,49 @@ type VerifiedUser = {
 
 type FormBlockProps = {
     verifiedUser: VerifiedUser
+    onSignOut: () => Promise<void>
 }
 
 const STEPS = ['Perfil personal', 'Educación e ingresos', 'Ubicación', 'Actividades digitales']
 
 function mergeFormData(source: Partial<FormData> | null | undefined): FormData {
-	return {
-		...INITIAL_FORM,
-		...source,
-		p316: {
-			...INITIAL_FORM.p316,
-			...(source?.p316 ?? {}),
-		},
-	}
+    return {
+        ...INITIAL_FORM,
+        ...source,
+        p316: {
+            ...INITIAL_FORM.p316,
+            ...(source?.p316 ?? {}),
+        },
+    }
 }
 
 function isFormComplete(formData: FormData) {
-	return stepSchemas.every((schema) => schema.safeParse(formData).success)
+    return stepSchemas.every((schema) => schema.safeParse(formData).success)
 }
 
 function getResumeStep(formData: FormData) {
-	for (let index = 0; index < stepSchemas.length; index += 1) {
-		if (!stepSchemas[index].safeParse(formData).success) {
-			return index
-		}
-	}
+    for (let index = 0; index < stepSchemas.length; index += 1) {
+        if (!stepSchemas[index].safeParse(formData).success) {
+            return index
+        }
+    }
 
-	return STEPS.length - 1
+    return STEPS.length - 1
 }
 
-export default function FormBlock({ verifiedUser }: FormBlockProps) {
+function hasAnyAnswer(formData: FormData): boolean {
+    return (
+        formData.edad !== null ||
+        formData.sexo !== null ||
+        formData.lengua !== null ||
+        formData.nivelEducacion !== null ||
+        formData.ingresoDelHogar !== null ||
+        formData.departamento !== '' ||
+        Object.values(formData.p316).some(v => v !== null)
+    )
+}
+
+export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [current, setCurrent] = useState(0)
     const [data, setData] = useState<FormData>(INITIAL_FORM)
     const [submitted, setSubmitted] = useState(false)
@@ -75,6 +88,7 @@ export default function FormBlock({ verifiedUser }: FormBlockProps) {
             }
 
             const response = await getFormResponse()
+            console.log('Respuesta cargada:', response)
 
             if (!mounted) {
                 return
@@ -84,9 +98,9 @@ export default function FormBlock({ verifiedUser }: FormBlockProps) {
                 const savedData = mergeFormData(response.data)
 
                 setData(savedData)
-                    setCompleted(Boolean(response.completed))
+                setCompleted(Boolean(response.completed))
 
-                    if (response.completed || isFormComplete(savedData)) {
+                if (response.completed || isFormComplete(savedData)) {
                     setSubmitted(true)
                 } else {
                     setCurrent(getResumeStep(savedData))
@@ -109,9 +123,8 @@ export default function FormBlock({ verifiedUser }: FormBlockProps) {
     }
 
     useEffect(() => {
-        if (!hydrated || submitted || completed) {
-            return
-        }
+        if (!hydrated || submitted || completed) return
+        if (!hasAnyAnswer(data)) return
 
         const timeoutId = window.setTimeout(() => {
             void saveFormDraft(data)
@@ -258,23 +271,40 @@ export default function FormBlock({ verifiedUser }: FormBlockProps) {
 
                             {/* Navigation */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-                                <button
-                                    onClick={back}
-                                    style={{
-                                        visibility: current > 0 ? 'visible' : 'hidden',
-                                        padding: '0.8rem 1.8rem', borderRadius: 8,
-                                        border: '2px solid rgba(0,0,0,0.15)', background: 'none',
-                                        fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', fontWeight: 600,
-                                        color: '#6B7280', cursor: 'pointer',
-                                    }}
-                                >
-                                    ← Anterior
-                                </button>
 
+                                {/* Izquierda: Anterior o Cerrar sesión */}
+                                {current === 0 ? (
+                                    <button
+                                        onClick={onSignOut}
+                                        style={{
+                                            padding: '0.8rem 1.4rem', borderRadius: 8,
+                                            border: '2px solid rgba(0,0,0,0.12)', background: 'none',
+                                            fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', fontWeight: 600,
+                                            color: '#6B7280', cursor: 'pointer',
+                                        }}
+                                    >
+                                        Cerrar sesión
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={back}
+                                        style={{
+                                            padding: '0.8rem 1.8rem', borderRadius: 8,
+                                            border: '2px solid rgba(0,0,0,0.15)', background: 'none',
+                                            fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', fontWeight: 600,
+                                            color: '#6B7280', cursor: 'pointer',
+                                        }}
+                                    >
+                                        ← Anterior
+                                    </button>
+                                )}
+
+                                {/* Centro */}
                                 <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
                                     {current + 1} / {STEPS.length}
                                 </span>
 
+                                {/* Derecha: Siguiente o Enviar */}
                                 <button
                                     onClick={current === STEPS.length - 1 ? submit : next}
                                     disabled={!currentIsValid || submitting}

@@ -6,7 +6,11 @@ export const metadata: Metadata = {
   description: 'Evalúa tu nivel de inclusión digital',
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
   return (
     <html lang="es">
       <head>

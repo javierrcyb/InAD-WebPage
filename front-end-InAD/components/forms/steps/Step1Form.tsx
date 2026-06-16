@@ -3,9 +3,14 @@ import { FORM_DICTIONARIES } from '@/lib/constants/dictionaries'
 import { FormData } from '@/types'
 import { OptionGrid, OptionItem } from '@/components/ui/OptionGrid'
 
-interface Props { data: FormData; update: (f: Partial<FormData>) => void }
+interface Props {
+  data: FormData
+  update: (f: Partial<FormData>) => void
+}
 
-export default function Step1Form({ data, update }: Props) {
+
+
+export default function Step1Form({ data, update}: Props) {
   return (
     <div>
       <OptionGrid label="Sexo" cols={2}>

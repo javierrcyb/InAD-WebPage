@@ -22,34 +22,23 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient()
-    let mounted = true  
-
-    supabase.auth.getUser().then(({ data }) => {
-      console.log('getUser result:', data.user)
-      if (!mounted) {
-        return
-      }
-
-      if (data.user) {
-        console.log('llamando onVerified desde getUser')
-        const provider = data.user.app_metadata?.provider
-        setUserEmail(data.user.email ?? '')
-        onVerified({ id: data.user.id, email: data.user.email ?? '', provider })
-      }
-    })
-
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('onAuthStateChange event:', _event, 'session:', session?.user)
-      if (session?.user) {
-        console.log('llamando onVerified desde onAuthStateChange')
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Solo reaccionar a login nuevo, no a sesión restaurada
+      if (
+        (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
+        session?.user
+      ) {
         const provider = session.user.app_metadata?.provider
         setUserEmail(session.user.email ?? '')
-        onVerified({ id: session.user.id, email: session.user.email ?? '', provider })
+        onVerified({
+          id: session.user.id,
+          email: session.user.email ?? '',
+          provider,
+        })
       }
     })
 
     return () => {
-      mounted = false
       data.subscription.unsubscribe()
     }
   }, [onVerified])
@@ -69,7 +58,7 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
   }
 
   const handleSendEmail = async () => {
-    const trimmedEmail = email.trim().toLowerCase()
+    const trimmedEmail = email.trim().toLowerCase() // Verificar email valido
 
     if (!trimmedEmail) {
       setError('Ingresa un correo válido para continuar.')
@@ -149,9 +138,9 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
           style={{
             display: 'grid',
             gap: '1.5rem',
-            gridTemplateColumns: '1fr', 
-            maxWidth: 520,              
-            margin: '0 auto',             
+            gridTemplateColumns: '1fr',
+            maxWidth: 520,
+            margin: '0 auto',
             alignItems: 'stretch',
             justifyContent: 'center'
           }}
