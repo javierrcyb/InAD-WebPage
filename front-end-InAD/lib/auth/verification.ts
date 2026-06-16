@@ -12,6 +12,9 @@ export async function loginWithGoogle() {
     provider: 'google',
     options: {
       redirectTo: getRedirectTo(),
+      queryParams: {
+        prompt: 'select_account',
+      },
     },
   })
 }

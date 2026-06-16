@@ -1,39 +1,32 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { CheckCircle2, Loader2, LockKeyhole, Mail, ShieldCheck } from 'lucide-react'
+import { CheckCircle2, Loader2, Mail } from 'lucide-react'
 import { createBrowserSupabaseClient } from '@/lib/supabase/client'
-import { loginWithGoogle, sendEmailOtp, verifyEmailOtp } from '@/lib/auth/verification'
+import { loginWithGoogle, sendEmailOtp } from '@/lib/auth/verification'
 
 type VerificationGateProps = {
   onVerified: (user: { id: string; email: string; provider?: string }) => void
 }
 
-type Step = 'email' | 'token'
-
 export default function VerificationGate({ onVerified }: VerificationGateProps) {
   const [email, setEmail] = useState('')
-  const [token, setToken] = useState('')
-  const [step, setStep] = useState<Step>('email')
   const [status, setStatus] = useState('')
   const [error, setError] = useState('')
-  const [busy, setBusy] = useState<'google' | 'email' | 'token' | null>(null)
-  const [userEmail, setUserEmail] = useState('')
+  const [busy, setBusy] = useState<'google' | 'email' | null>(null)
+  const [linkSent, setLinkSent] = useState(false)
 
   useEffect(() => {
     const supabase = createBrowserSupabaseClient()
     const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      // Solo reaccionar a login nuevo, no a sesión restaurada
       if (
         (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
         session?.user
       ) {
-        const provider = session.user.app_metadata?.provider
-        setUserEmail(session.user.email ?? '')
         onVerified({
           id: session.user.id,
           email: session.user.email ?? '',
-          provider,
+          provider: session.user.app_metadata?.provider,
         })
       }
     })
@@ -45,20 +38,18 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
 
   const handleGoogle = async () => {
     setError('')
-    setStatus('Abriendo Google para completar la verificación.')
     setBusy('google')
 
     try {
       await loginWithGoogle()
     } catch (authError) {
       setError(authError instanceof Error ? authError.message : 'No se pudo iniciar Google.')
-      setStatus('')
       setBusy(null)
     }
   }
 
   const handleSendEmail = async () => {
-    const trimmedEmail = email.trim().toLowerCase() // Verificar email valido
+    const trimmedEmail = email.trim().toLowerCase()
 
     if (!trimmedEmail) {
       setError('Ingresa un correo válido para continuar.')
@@ -66,58 +57,17 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
     }
 
     setError('')
-    setStatus('Enviando el código al correo ingresado.')
     setBusy('email')
 
     try {
       const { error: sendError } = await sendEmailOtp(trimmedEmail)
 
-      if (sendError) {
-        throw sendError
-      }
+      if (sendError) throw sendError
 
-      setStep('token')
-      setStatus('Revisa tu correo y pega el código de 6 dígitos.')
+      setLinkSent(true)
+      setStatus(`Link enviado a ${trimmedEmail}`)
     } catch (authError) {
-      setError(authError instanceof Error ? authError.message : 'No se pudo enviar el código.')
-      setStatus('')
-    } finally {
-      setBusy(null)
-    }
-  }
-
-  const handleVerifyToken = async () => {
-    const trimmedEmail = email.trim().toLowerCase()
-    const trimmedToken = token.trim()
-
-    if (!trimmedEmail || !trimmedToken) {
-      setError('Completa correo y código antes de verificar.')
-      return
-    }
-
-    setError('')
-    setStatus('Verificando el código.')
-    setBusy('token')
-
-    try {
-      const { error: verifyError } = await verifyEmailOtp(trimmedEmail, trimmedToken)
-
-      if (verifyError) {
-        throw verifyError
-      }
-
-      const { data } = await createBrowserSupabaseClient().auth.getUser()
-
-      if (!data.user) {
-        throw new Error('No se pudo confirmar la sesión autenticada.')
-      }
-
-      setUserEmail(data.user.email ?? trimmedEmail)
-      setStatus('Correo verificado correctamente.')
-      onVerified({ id: data.user.id, email: data.user.email ?? trimmedEmail, provider: data.user.app_metadata?.provider })
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : 'No se pudo verificar el código.')
-      setStatus('')
+      setError(authError instanceof Error ? authError.message : 'No se pudo enviar el link de verificación.')
     } finally {
       setBusy(null)
     }
@@ -130,7 +80,6 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
         padding: '5rem 2.5rem 2rem',
         background:
           'radial-gradient(circle at top left, rgba(74,151,154,0.14), transparent 34%), radial-gradient(circle at top right, rgba(213,99,86,0.14), transparent 30%), linear-gradient(180deg, #f7f5f1 0%, #ffffff 100%)',
-
       }}
     >
       <div style={{ maxWidth: 1120, margin: '0 auto' }}>
@@ -142,10 +91,9 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
             maxWidth: 520,
             margin: '0 auto',
             alignItems: 'stretch',
-            justifyContent: 'center'
+            justifyContent: 'center',
           }}
         >
-
           <div
             style={{
               borderRadius: 28,
@@ -180,6 +128,7 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
               </div>
             </div>
 
+            {/* Google */}
             <button
               type="button"
               onClick={handleGoogle}
@@ -200,43 +149,32 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
                 opacity: busy && busy !== 'google' ? 0.7 : 1,
               }}
             >
-              {busy === 'google' ? <Loader2 size={18} className="animate-spin" /> : <span style={{ fontWeight: 800 }}>G</span>}
+              {busy === 'google'
+                ? <Loader2 size={18} className="animate-spin" />
+                : <span style={{ fontWeight: 800 }}>G</span>
+              }
               Continuar con Google
             </button>
 
+            {/* Divider */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1rem 0' }}>
               <div style={{ flex: 1, height: 1, background: 'rgba(10,58,107,0.12)' }} />
               <span style={{ fontSize: '0.8rem', color: '#6B7280', textTransform: 'uppercase', letterSpacing: '0.08em' }}>o</span>
               <div style={{ flex: 1, height: 1, background: 'rgba(10,58,107,0.12)' }} />
             </div>
 
+            {/* Email */}
             <div style={{ display: 'grid', gap: '0.85rem' }}>
-              <label style={{ display: 'grid', gap: '0.45rem' }}>
-                <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--navy)' }}>Ingresa tu correo</span>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem' }}>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(event) => setEmail(event.target.value)}
-                    placeholder="correo@ejemplo.com"
-                    style={{
-                      width: '100%',
-                      padding: '0.9rem 1rem',
-                      borderRadius: 14,
-                      border: '1px solid rgba(10,58,107,0.14)',
-                      fontFamily: 'DM Sans, sans-serif',
-                      fontSize: '0.95rem',
-                      outline: 'none',
-                    }}
-                  />
-
-                  {step === 'token' && (
+              {!linkSent ? (
+                <>
+                  <label style={{ display: 'grid', gap: '0.45rem' }}>
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--navy)' }}>Ingresa tu correo</span>
                     <input
-                      type="text"
-                      value={token}
-                      onChange={(event) => setToken(event.target.value)}
-                      placeholder="Código de 6 dígitos"
-                      inputMode="numeric"
+                      type="email"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); setError('') }}
+                      onKeyDown={(e) => e.key === 'Enter' && handleSendEmail()}
+                      placeholder="correo@ejemplo.com"
                       style={{
                         width: '100%',
                         padding: '0.9rem 1rem',
@@ -245,86 +183,73 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
                         fontFamily: 'DM Sans, sans-serif',
                         fontSize: '0.95rem',
                         outline: 'none',
-                        letterSpacing: '0.22em',
+                        boxSizing: 'border-box',
                       }}
                     />
-                  )}
-                </div>
-              </label>
+                  </label>
 
-              {step === 'email' ? (
-                <button
-                  type="button"
-                  onClick={handleSendEmail}
-                  disabled={busy !== null}
-                  style={{
-                    width: '100%',
-                    padding: '0.95rem 1rem',
-                    borderRadius: 16,
-                    border: 'none',
-                    background: 'var(--teal)',
-                    color: 'white',
-                    fontWeight: 700,
-                    cursor: busy ? 'wait' : 'pointer',
-                    opacity: busy && busy !== 'email' ? 0.7 : 1,
-                  }}
-                >
-                  {busy === 'email' ? 'Enviando...' : 'Enviarme el código'}
-                </button>
-              ) : (
-                <div style={{ display: 'flex', gap: '0.75rem' }}>
                   <button
                     type="button"
-                    onClick={() => setStep('email')}
+                    onClick={handleSendEmail}
                     disabled={busy !== null}
                     style={{
-                      flex: 0.9,
-                      padding: '0.95rem 1rem',
-                      borderRadius: 16,
-                      border: '1px solid rgba(10,58,107,0.16)',
-                      background: 'white',
-                      color: 'var(--navy)',
-                      fontWeight: 700,
-                      cursor: busy ? 'wait' : 'pointer',
-                    }}
-                  >
-                    Cambiar correo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleVerifyToken}
-                    disabled={busy !== null}
-                    style={{
-                      flex: 1.1,
+                      width: '100%',
                       padding: '0.95rem 1rem',
                       borderRadius: 16,
                       border: 'none',
-                      background: 'var(--navy)',
+                      background: 'var(--teal)',
                       color: 'white',
                       fontWeight: 700,
                       cursor: busy ? 'wait' : 'pointer',
+                      opacity: busy && busy !== 'email' ? 0.7 : 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.5rem',
                     }}
                   >
-                    {busy === 'token' ? 'Verificando...' : 'Validar código'}
+                    {busy === 'email'
+                      ? <><Loader2 size={16} className="animate-spin" /> Enviando...</>
+                      : 'Enviarme el link'
+                    }
                   </button>
-                </div>
-              )}
-
-              {status && (
+                </>
+              ) : (
+                /* Estado: link enviado */
                 <div
                   style={{
                     display: 'flex',
-                    gap: '0.65rem',
-                    alignItems: 'flex-start',
-                    padding: '0.95rem 1rem',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    padding: '1.25rem',
                     borderRadius: 16,
                     background: 'rgba(74,151,154,0.08)',
-                    color: 'var(--navy)',
-                    lineHeight: 1.55,
+                    textAlign: 'center',
                   }}
                 >
-                  <CheckCircle2 size={18} style={{ flexShrink: 0, marginTop: 2 }} />
-                  <span>{status}</span>
+                  <CheckCircle2 size={32} style={{ color: 'var(--teal)' }} />
+                  <div>
+                    <p style={{ margin: 0, fontWeight: 700, color: 'var(--navy)' }}>Revisa tu correo</p>
+                    <p style={{ margin: '0.3rem 0 0', fontSize: '0.875rem', color: '#6B7280' }}>
+                      Enviamos un link a <strong>{email}</strong>.<br />
+                      Haz click en el link para ingresar.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setLinkSent(false); setStatus(''); setEmail('') }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--teal)',
+                      cursor: 'pointer',
+                      fontSize: '0.85rem',
+                      textDecoration: 'underline',
+                    }}
+                  >
+                    Usar otro correo
+                  </button>
                 </div>
               )}
 
@@ -336,23 +261,10 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
                     background: 'rgba(211,99,86,0.08)',
                     color: 'var(--coral)',
                     lineHeight: 1.55,
+                    fontSize: '0.875rem',
                   }}
                 >
                   {error}
-                </div>
-              )}
-
-              {userEmail && (
-                <div
-                  style={{
-                    padding: '0.95rem 1rem',
-                    borderRadius: 16,
-                    background: 'rgba(245,130,49,0.08)',
-                    color: 'var(--navy)',
-                    lineHeight: 1.55,
-                  }}
-                >
-                  Sesión detectada: <strong>{userEmail}</strong>
                 </div>
               )}
             </div>

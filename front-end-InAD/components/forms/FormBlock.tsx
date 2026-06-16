@@ -61,6 +61,27 @@ function hasAnyAnswer(formData: FormData): boolean {
     )
 }
 
+function SignOutButton({ onSignOut }: { onSignOut: () => Promise<void> }) {
+    return (
+        <button
+            onClick={onSignOut}
+            style={{
+                padding: '0.8rem 1.4rem',
+                borderRadius: 8,
+                border: '2px solid rgba(0,0,0,0.12)',
+                background: 'none',
+                fontFamily: 'DM Sans, sans-serif',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                color: '#6B7280',
+                cursor: 'pointer',
+            }}
+        >
+            Cerrar sesión
+        </button>
+    )
+}
+
 export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [current, setCurrent] = useState(0)
     const [data, setData] = useState<FormData>(INITIAL_FORM)
@@ -237,6 +258,7 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
                             <p style={{ color: '#6B7280', lineHeight: 1.7 }}>
                                 Tus respuestas han sido registradas. Pronto recibirás tu índice de inclusión digital con recursos personalizados.
                             </p>
+                            <SignOutButton onSignOut={onSignOut} />
                         </div>
                     ) : (
                         <>
@@ -274,17 +296,7 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
 
                                 {/* Izquierda: Anterior o Cerrar sesión */}
                                 {current === 0 ? (
-                                    <button
-                                        onClick={onSignOut}
-                                        style={{
-                                            padding: '0.8rem 1.4rem', borderRadius: 8,
-                                            border: '2px solid rgba(0,0,0,0.12)', background: 'none',
-                                            fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', fontWeight: 600,
-                                            color: '#6B7280', cursor: 'pointer',
-                                        }}
-                                    >
-                                        Cerrar sesión
-                                    </button>
+                                    <SignOutButton onSignOut={onSignOut} />
                                 ) : (
                                     <button
                                         onClick={back}
