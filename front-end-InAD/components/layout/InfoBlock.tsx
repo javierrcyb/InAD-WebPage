@@ -1,5 +1,3 @@
-// BORRAR O REEMPLAZAR
-
 const features = [
 
     {
@@ -33,7 +31,7 @@ export default function InfoBlock() {
                 {/* Header */}
                 <h2 style={{
                     fontFamily: 'Syne, sans-serif',
-                    fontWeight: 700,
+                    fontWeight: 500,
                     fontSize: 'clamp(2.2rem, 5vw, 4rem)',
                     color: 'var(--navy)',
                     letterSpacing: '-0.01em',
@@ -46,21 +44,21 @@ export default function InfoBlock() {
                 </h2>
 
                 <p
-  style={{
-    fontFamily: 'Syne, sans-serif',
-    fontWeight: 700,
-    fontSize: '0.75rem',
-    letterSpacing: '0.08em',
-    lineHeight: 1.1,
-    textTransform: 'uppercase',
-    color: 'var(--coral)',
-    marginBottom: '0.5rem',
-    textRendering: 'optimizeLegibility',
-    WebkitFontSmoothing: 'antialiased',
-  }}
->
-  ¿Qué es este índice?
-</p>
+                    style={{
+                        fontFamily: 'Syne, sans-serif',
+                        fontWeight: 700,
+                        fontSize: '0.75rem',
+                        letterSpacing: '0.08em',
+                        lineHeight: 1.1,
+                        textTransform: 'uppercase',
+                        color: 'var(--coral)',
+                        marginBottom: '0.5rem',
+                        textRendering: 'optimizeLegibility',
+                        WebkitFontSmoothing: 'antialiased',
+                    }}
+                >
+                    ¿Qué es este índice?
+                </p>
 
                 {/* Grid */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4rem', alignItems: 'start' }}>
@@ -76,25 +74,6 @@ export default function InfoBlock() {
 
                         <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>
                             Al finalizar la evaluación recibirás un resultado personalizado con recursos y recomendaciones para fortalecer tus competencias digitales.                        </p>
-
-                        <a
-                            href="#verificacion"
-                            style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '0.5rem',
-                                marginTop: '2rem',
-                                background: 'var(--navy)',
-                                color: 'white',
-                                padding: '0.85rem 1.8rem',
-                                borderRadius: 8,
-                                fontWeight: 600,
-                                fontSize: '0.95rem',
-                                textDecoration: 'none',
-                            }}
-                        >
-                            Ir a la verificación ↓
-                        </a>
                     </div>
 
                     {/* texto derecha    */}
@@ -116,7 +95,28 @@ export default function InfoBlock() {
                                     <span style={{ fontSize: '0.83rem', color: '#6B7280', lineHeight: 1.5 }}>{f.desc}</span>
                                 </div>
                             </div>
+
                         ))}
+                    <a
+  href="#verificacion"
+  style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '1.1rem 1.25rem',
+    borderRadius: 10,
+    border: '1px solid rgba(0,0,0,0.07)',
+    background: 'var(--navy)',
+    color: 'var(--bg)',
+    textDecoration: 'none',
+    fontWeight: 600,
+    marginTop: '1rem',
+    transition: 'all .2s ease',
+  }}
+>
+  <span>Ir a la evaluación</span>
+  <span>↓</span>
+</a>
                     </div>
 
                 </div>

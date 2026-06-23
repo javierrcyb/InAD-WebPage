@@ -1,5 +1,3 @@
-// VER QUE HACER CON ESTO
-
 'use client'
 import { FormData } from '@/types'
 

@@ -16,25 +16,26 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
   const [busy, setBusy] = useState<'google' | 'email' | null>(null)
   const [linkSent, setLinkSent] = useState(false)
 
-  useEffect(() => {
-    const supabase = createBrowserSupabaseClient()
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (
-        (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
-        session?.user
-      ) {
-        onVerified({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          provider: session.user.app_metadata?.provider,
-        })
-      }
-    })
+useEffect(() => {
+  const supabase = createBrowserSupabaseClient()
 
-    return () => {
-      data.subscription.unsubscribe()
+  supabase.auth.getSession() // dispara el exchange si hay code en la URL
+
+  const { data } = supabase.auth.onAuthStateChange((event, session) => {
+    if (
+      (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
+      session?.user
+    ) {
+      onVerified({
+        id: session.user.id,
+        email: session.user.email ?? '',
+        provider: session.user.app_metadata?.provider,
+      })
     }
-  }, [onVerified])
+  })
+
+  return () => data.subscription.unsubscribe()
+}, [onVerified])
 
   const handleGoogle = async () => {
     setError('')

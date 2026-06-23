@@ -1,4 +1,4 @@
-import ubigeoData from '@/data/ubigeo.json'
+import ubigeoData from '@/lib/data/ubigeo.json'
 
 export interface UbigeoDistrict {
   code: string

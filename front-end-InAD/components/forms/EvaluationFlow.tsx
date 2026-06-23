@@ -17,11 +17,6 @@ export default function EvaluationFlow() {
 
   console.log('EvaluationFlow render — verifiedUser:', verifiedUser) 
 
-  const handleVerified = (user: VerifiedUser) => {
-    console.log('onVerified llamado con:', user) 
-    setVerifiedUser(user)
-  }
-
   const handleSignOut = async () => {
     const supabase = createBrowserSupabaseClient()
     await supabase.auth.signOut()

@@ -6,10 +6,14 @@ import Step1Form from './steps/Step1Form'
 import Step2Form from './steps/Step2Form'
 import Step3Form from './steps/Step3Form'
 import Step4Form from './steps/Step4Form'
+import Step5Form from './steps/Step5Form'
+import Step6Form from './steps/Step6Form'
 import { stepSchemas } from '@/lib/validations/form'
 import { completeFormResponse, getFormResponse, saveFormDraft } from '@/lib/supabase/responses'
 import { createBrowserSupabaseClient } from '@/lib/supabase/client'
 import { Loader2 } from 'lucide-react'
+import { calcularINAD, ResultadoINAD } from '@/lib/calculations/InAdCalculation'
+import ResultadoBlock from './ResultadoBlock'
 
 type VerifiedUser = {
     id: string
@@ -22,7 +26,7 @@ type FormBlockProps = {
     onSignOut: () => Promise<void>
 }
 
-const STEPS = ['Perfil personal', 'Educación e ingresos', 'Ubicación', 'Actividades digitales']
+const STEPS = ['Perfil personal', 'Educación e ingresos', 'Ubicación', 'Actividades digitales', 'Inteligencia Artificial', 'Ciberespacio']
 
 function mergeFormData(source: Partial<FormData> | null | undefined): FormData {
     return {
@@ -91,6 +95,7 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [submitError, setSubmitError] = useState('')
     const [hydrated, setHydrated] = useState(false)
     const [completed, setCompleted] = useState(false)
+    const [resultado, setResultado] = useState<ResultadoINAD | null>(null)
 
     useEffect(() => {
         const supabase = createBrowserSupabaseClient()
@@ -123,6 +128,7 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
 
                 if (response.completed || isFormComplete(savedData)) {
                     setSubmitted(true)
+                    setResultado(calcularINAD(savedData))
                 } else {
                     setCurrent(getResumeStep(savedData))
                 }
@@ -181,6 +187,11 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
         setSubmitting(true)
         setSubmitError('')
 
+        // 1. Calcular INAD antes de guardar
+        const inad = calcularINAD(data)
+        setResultado(inad)
+
+        // 2. Guardar en Supabase (igual que antes)
         const response = await completeFormResponse(data)
 
         if (!response.success) {
@@ -189,11 +200,12 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
             return
         }
 
-        // Éxito - mostrar pantalla de confirmación
         setSubmitted(true)
         setCompleted(true)
         setSubmitting(false)
     }
+
+    console.log('step valid:', stepSchemas[current].safeParse(data))
 
     return (
         <section id="evaluacion" style={{ background: 'var(--bg)', padding: '5rem 2.5rem' }}>
@@ -249,15 +261,21 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
                 {/* Card */}
                 <div style={{ background: 'white', borderRadius: 16, padding: '2.5rem', boxShadow: '0 8px 32px rgba(10,58,107,0.07)' }}>
 
-                    {submitted ? (
-                        <div style={{ textAlign: 'center', padding: '3rem 1rem' }}>
+                    {submitted && resultado ? (
+                        <>
+                            {/* Mantén el header y la barra de progreso completa arriba */}
+                            <ResultadoBlock
+                                resultado={resultado}
+                                email={verifiedUser.email}
+                                onSignOut={onSignOut}
+                            />
+                        </>
+                    ) : submitted ? (
+                        <div style={{ background: 'white', borderRadius: 16, padding: '2.5rem', textAlign: 'center' }}>
                             <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-                            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy)', marginBottom: '0.75rem' }}>
+                            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy)' }}>
                                 ¡Evaluación completada!
                             </h3>
-                            <p style={{ color: '#6B7280', lineHeight: 1.7 }}>
-                                Tus respuestas han sido registradas. Pronto recibirás tu índice de inclusión digital con recursos personalizados.
-                            </p>
                             <SignOutButton onSignOut={onSignOut} />
                         </div>
                     ) : (
@@ -290,6 +308,8 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
                             {current === 1 && <Step2Form data={data} update={update} />}
                             {current === 2 && <Step3Form data={data} update={update} />}
                             {current === 3 && <Step4Form data={data} update={update} />}
+                            {current === 4 && <Step5Form data={data} update={update} />}
+                            {current === 5 && <Step6Form data={data} update={update} />}
 
                             {/* Navigation */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.08)' }}>

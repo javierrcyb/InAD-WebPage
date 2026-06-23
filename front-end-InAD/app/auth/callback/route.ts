@@ -1,3 +1,4 @@
+// app/auth/callback/route.ts
 import { NextResponse } from 'next/server'
 
 export async function GET(request: Request) {
@@ -8,5 +9,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${origin}/#verificacion`)
   }
 
-  return NextResponse.redirect(`${origin}?code=${code}#verificacion`)
+  // Pasa el code al cliente para que Supabase complete el PKCE exchange
+  return NextResponse.redirect(`${origin}/?code=${code}#verificacion`)
 }

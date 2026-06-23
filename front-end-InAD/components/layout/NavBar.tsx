@@ -1,45 +1,43 @@
-// Final Ahora si
+import logo from '@/lib/data/Logo Neurometrics blanco.png';
+import flechaSVG from "@/lib/data/open-in-new-svgrepo-com.svg"
 
 export default function NavBar() {
     return (
-        <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-10 py-4"
+        <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-12 py-7"
             style={{ background: 'var(--coral)', backdropFilter: 'blur(14px)', borderBottom: '1px solid rgba(74,151,154,0.15)' }}>
-            <div
+            <a
+                href="/"
                 style={{
-                    fontFamily: 'Syne, sans-serif',
-                    fontWeight: 700,
-                    color: 'var(--bg)',
-                    fontSize: '1rem',
-                    letterSpacing: '0.02em',
-                    lineHeight: 1.1,
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '0.5rem',
-                    textRendering: 'optimizeLegibility',
-                    WebkitFontSmoothing: 'antialiased',
+                    textDecoration: 'none',
                 }}
             >
-                <span
+                <img
+                    src={logo.src}
+                    alt="Neurometrics"
                     style={{
-                        width: 10,
-                        height: 10,
-                        background: 'var(--teal)',
-                        borderRadius: '50%',
-                        display: 'inline-block',
+                        height: '20px',
+                        width: 'auto',
+                        display: 'block',
                     }}
                 />
-                NEUROMETRICS
-            </div>
+            </a>
             <div className="flex items-center gap-6">
-                <a href="#info" className="text-sm font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>¿Qué es?</a>
-                <a href="#verificacion" className="text-sm font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>Evaluación</a>
+                <a href="#info" className="text-base font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>¿Qué es?</a>
+                <a href="#verificacion" className="text-base font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>Evaluación</a>
                 <a
                     href="https://neurometrics.la/"
                     target="_blank"
-                    className="text-sm font-semibold px-4 py-2 rounded-lg transition-all"
-                    style={{ background: 'var(--navy)', color: 'white', textDecoration: 'none' }}
+                    className="text-base font-medium"
+                    style={{ color: 'var(--bg)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '4px'}}
                 >
-                    Neurometrics →
+                    Neurometrics
+                    <img
+                        src={flechaSVG.src}
+                        alt=""
+                        style={{ width: '1em', height: '1em', filter: 'brightness(0) invert(1)' }}
+                    />
                 </a>
             </div>
         </nav>
