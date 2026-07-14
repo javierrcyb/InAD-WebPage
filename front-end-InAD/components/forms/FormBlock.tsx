@@ -2,23 +2,25 @@
 
 import { useEffect, useState } from 'react'
 import { FormData, INITIAL_FORM } from '@/types'
+import Step0Form from './steps/Step0Form'
 import Step1Form from './steps/Step1Form'
 import Step2Form from './steps/Step2Form'
 import Step3Form from './steps/Step3Form'
 import Step4Form from './steps/Step4Form'
 import Step5Form from './steps/Step5Form'
 import Step6Form from './steps/Step6Form'
+import ResultadoBlock from './ResultadoBlock'
 import { stepSchemas } from '@/lib/validations/form'
 import { completeFormResponse, getFormResponse, saveFormDraft } from '@/lib/supabase/responses'
 import { createBrowserSupabaseClient } from '@/lib/supabase/client'
-import { Loader2 } from 'lucide-react'
 import { calcularINAD, ResultadoINAD } from '@/lib/calculations/InAdCalculation'
-import ResultadoBlock from './ResultadoBlock'
+import { Loader2 } from 'lucide-react'
 
 type VerifiedUser = {
     id: string
     email: string
     provider?: string
+    user_metadata?: Record<string, string>
 }
 
 type FormBlockProps = {
@@ -26,35 +28,43 @@ type FormBlockProps = {
     onSignOut: () => Promise<void>
 }
 
-const STEPS = ['Perfil personal', 'Educación e ingresos', 'Ubicación', 'Actividades digitales', 'Inteligencia Artificial', 'Ciberespacio']
+const STEPS = [
+    'Bienvenida',
+    'Perfil personal',
+    'Educación e ingresos',
+    'Ubicación',
+    'Actividades digitales',
+    'Inteligencia Artificial',
+    'Ciberespacio',
+]
 
 function mergeFormData(source: Partial<FormData> | null | undefined): FormData {
     return {
         ...INITIAL_FORM,
         ...source,
-        p316: {
-            ...INITIAL_FORM.p316,
-            ...(source?.p316 ?? {}),
-        },
+        p316: { ...INITIAL_FORM.p316, ...(source?.p316 ?? {}) },
+        preguntasIA: { ...INITIAL_FORM.preguntasIA, ...(source?.preguntasIA ?? {}) },
+        preguntasCiberespacio: { ...INITIAL_FORM.preguntasCiberespacio, ...(source?.preguntasCiberespacio ?? {}) },
     }
 }
 
 function isFormComplete(formData: FormData) {
-    return stepSchemas.every((schema) => schema.safeParse(formData).success)
+    return stepSchemas.every(schema => schema.safeParse(formData).success)
 }
 
 function getResumeStep(formData: FormData) {
-    for (let index = 0; index < stepSchemas.length; index += 1) {
-        if (!stepSchemas[index].safeParse(formData).success) {
-            return index
-        }
+    for (let i = 0; i < stepSchemas.length; i++) {
+        if (!stepSchemas[i].safeParse(formData).success) return i
     }
-
     return STEPS.length - 1
 }
 
 function hasAnyAnswer(formData: FormData): boolean {
     return (
+        formData.nombre !== '' ||
+        formData.apellido !== '' ||
+        formData.ocupacion !== '' ||
+        formData.institucion !== '' ||
         formData.edad !== null ||
         formData.sexo !== null ||
         formData.lengua !== null ||
@@ -65,26 +75,32 @@ function hasAnyAnswer(formData: FormData): boolean {
     )
 }
 
+function extractGoogleName(metadata: Record<string, string>): { nombre: string; apellido: string } {
+    const fullName = metadata.full_name ?? metadata.name ?? ''
+    const parts = fullName.trim().split(' ')
+    const nombre = parts[0] ?? ''
+    const apellido = parts.slice(1).join(' ') ?? ''
+    return { nombre, apellido }
+}
+
 function SignOutButton({ onSignOut }: { onSignOut: () => Promise<void> }) {
     return (
         <button
             onClick={onSignOut}
             style={{
-                padding: '0.8rem 1.4rem',
-                borderRadius: 8,
-                border: '2px solid rgba(0,0,0,0.12)',
-                background: 'none',
-                fontFamily: 'DM Sans, sans-serif',
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                color: '#6B7280',
-                cursor: 'pointer',
+                padding: '0.8rem 1.4rem', borderRadius: 8,
+                border: '2px solid rgba(0,0,0,0.12)', background: 'none',
+                fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem',
+                fontWeight: 600, color: '#6B7280', cursor: 'pointer',
             }}
         >
             Cerrar sesión
         </button>
     )
 }
+
+// ── Tipos de errores ──────────────────────────────────────────────
+type Step0Errors = Partial<Record<'nombre' | 'apellido' | 'ocupacion' | 'institucion' | 'telefono', string>>
 
 export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [current, setCurrent] = useState(0)
@@ -96,41 +112,44 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [hydrated, setHydrated] = useState(false)
     const [completed, setCompleted] = useState(false)
     const [resultado, setResultado] = useState<ResultadoINAD | null>(null)
+    const [fromGoogle, setFromGoogle] = useState(false)
+    const [step0Errors, setStep0Errors] = useState<Step0Errors>({})  // ← nuevo
 
     useEffect(() => {
-        const supabase = createBrowserSupabaseClient()
         let mounted = true
 
         const loadResponse = async () => {
-            const { data: { user } } = await supabase.auth.getUser()
-
-            if (!mounted) {
-                return
-            }
-
-            if (!user || user.id !== verifiedUser.id) {
-                setHydrated(true)
-                return
-            }
+            const isGoogle =
+                verifiedUser.provider === 'google' ||
+                Boolean(verifiedUser.user_metadata?.full_name)
+            setFromGoogle(isGoogle)
 
             const response = await getFormResponse()
-            console.log('Respuesta cargada:', response)
-
-            if (!mounted) {
-                return
-            }
+            if (!mounted) return
 
             if (response.success && response.data) {
                 const savedData = mergeFormData(response.data)
+
+                if (isGoogle && !savedData.nombre && verifiedUser.user_metadata) {
+                    const { nombre, apellido } = extractGoogleName(verifiedUser.user_metadata)
+                    savedData.nombre = nombre
+                    savedData.apellido = apellido
+                }
 
                 setData(savedData)
                 setCompleted(Boolean(response.completed))
 
                 if (response.completed || isFormComplete(savedData)) {
+                    const inad = calcularINAD(savedData)
+                    setResultado(inad)
                     setSubmitted(true)
-                    setResultado(calcularINAD(savedData))
                 } else {
                     setCurrent(getResumeStep(savedData))
+                }
+            } else {
+                if (isGoogle && verifiedUser.user_metadata) {
+                    const { nombre, apellido } = extractGoogleName(verifiedUser.user_metadata)
+                    setData(prev => ({ ...prev, nombre, apellido }))
                 }
             }
 
@@ -138,10 +157,7 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
         }
 
         void loadResponse()
-
-        return () => {
-            mounted = false
-        }
+        return () => { mounted = false }
     }, [verifiedUser.id])
 
     const update = (fields: Partial<FormData>) => {
@@ -152,46 +168,51 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     useEffect(() => {
         if (!hydrated || submitted || completed) return
         if (!hasAnyAnswer(data)) return
-
-        const timeoutId = window.setTimeout(() => {
-            void saveFormDraft(data)
-        }, 700)
-
-        return () => window.clearTimeout(timeoutId)
+        const id = window.setTimeout(() => { void saveFormDraft(data) }, 700)
+        return () => window.clearTimeout(id)
     }, [completed, data, hydrated, submitted])
 
     const currentIsValid = stepSchemas[current].safeParse(data).success
 
     const next = () => {
         const result = stepSchemas[current].safeParse(data)
+        console.log('data.telefono:', JSON.stringify(data.telefono))
+        console.log('safeParse result:', JSON.stringify(result, null, 2))
 
-        if (!result.success) {
-            setStepError('Completa todas las respuestas para continuar.')
-            return
-        }
+       //  if (!result.success) {
+            // Si es el paso 0, extraer errores por campo
+       //      if (current === 0) {
+       //          const fieldErrors = result.error.flatten().fieldErrors
+        //         setStep0Errors(
+         //            Object.fromEntries(
+        //                 Object.entries(fieldErrors).map(([k, v]) => [k, (v as string[])?.[0]])
+        //             ) as Step0Errors
+    //        )
+        //    }
+        //    setStepError('Completa todas las respuestas para continuar.')
+       //     return
+ //       }
 
-        setStepError('')
+     //   setStepError('')
+       // setStep0Errors({})
         setCurrent(s => Math.min(s + 1, STEPS.length - 1))
     }
+
     const back = () => setCurrent(s => Math.max(s - 1, 0))
 
     const submit = async () => {
-        const result = stepSchemas[current].safeParse(data)
-
-        if (!result.success) {
-            setStepError('Completa todas las respuestas para continuar.')
-            return
-        }
+        //if (!stepSchemas[current].safeParse(data).success) {
+        //    setStepError('Completa todas las respuestas para continuar.')
+          //  return
+        //}
 
         setStepError('')
         setSubmitting(true)
         setSubmitError('')
 
-        // 1. Calcular INAD antes de guardar
         const inad = calcularINAD(data)
         setResultado(inad)
 
-        // 2. Guardar en Supabase (igual que antes)
         const response = await completeFormResponse(data)
 
         if (!response.success) {
@@ -203,49 +224,54 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
         setSubmitted(true)
         setCompleted(true)
         setSubmitting(false)
+        try {
+            const res = await fetch('/api/pdf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ resultado: inad, email: verifiedUser.email }),
+            })
+            const blob = await res.blob()
+            const url = URL.createObjectURL(blob)
+            const a = document.createElement('a')
+            a.href = url
+            a.download = `INAD_${Date.now()}.pdf`
+            a.click()
+            URL.revokeObjectURL(url)
+        } catch (err) {
+            console.error('Error descargando PDF:', err)
+        }
     }
 
-    console.log('step valid:', stepSchemas[current].safeParse(data))
+    if (!hydrated) {
+        return (
+            <section id="verificacion" style={{ background: 'var(--bg)', padding: '5rem 2.5rem' }}>
+                <div style={{ maxWidth: 780, margin: '0 auto', textAlign: 'center', color: '#6B7280' }}>
+                    Cargando...
+                </div>
+            </section>
+        )
+    }
 
     return (
-        <section id="evaluacion" style={{ background: 'var(--bg)', padding: '5rem 2.5rem' }}>
+        <section id="verificacion" style={{ background: 'var(--bg)', padding: '5rem 2.5rem' }}>
             <div style={{ maxWidth: 780, margin: '0 auto' }}>
 
-                {/* Header */}
-                <p
-                    style={{
-                        fontFamily: 'Syne, sans-serif',
-                        fontWeight: 700,
-                        fontSize: '0.75rem',
-                        letterSpacing: '0.08em',
-                        lineHeight: 1.1,
-                        textTransform: 'uppercase',
-                        color: 'var(--coral)',
-                        marginBottom: '0.5rem',
-                        textRendering: 'optimizeLegibility',
-                        WebkitFontSmoothing: 'antialiased',
-                    }}
-                >
+                <p style={{
+                    fontFamily: 'Syne, sans-serif', fontWeight: 700,
+                    fontSize: '0.75rem', letterSpacing: '0.08em',
+                    textTransform: 'uppercase', color: 'var(--coral)',
+                    marginBottom: '0.5rem',
+                }}>
                     Evaluación
                 </p>
-
-                <h2
-                    style={{
-                        fontFamily: 'Syne, sans-serif',
-                        fontWeight: 700,
-                        fontSize: 'clamp(2.2rem, 3vw, 4rem)',
-                        color: 'var(--navy)',
-                        letterSpacing: '-0.01em',
-                        lineHeight: 1.1,
-                        marginBottom: '1.5rem',
-                        textRendering: 'optimizeLegibility',
-                        WebkitFontSmoothing: 'antialiased',
-                    }}
-                >
-                    Completa el formulario
+                <h2 style={{
+                    fontFamily: 'Syne, sans-serif', fontWeight: 700,
+                    fontSize: 'clamp(2.2rem, 3vw, 4rem)', color: 'var(--navy)',
+                    letterSpacing: '-0.01em', lineHeight: 1.1, marginBottom: '1.5rem',
+                }}>
+                    {submitted ? `Resultados de ${data.nombre}` : 'Completa el formulario'}
                 </h2>
 
-                {/* Progress */}
                 {!submitted && (
                     <div style={{ display: 'flex', gap: 4, marginBottom: '2rem' }}>
                         {STEPS.map((_, i) => (
@@ -258,95 +284,104 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
                     </div>
                 )}
 
-                {/* Card */}
-                <div style={{ background: 'white', borderRadius: 16, padding: '2.5rem', boxShadow: '0 8px 32px rgba(10,58,107,0.07)' }}>
-
+                <div style={{
+                    background: 'white', borderRadius: 16,
+                    padding: '2.5rem',
+                    boxShadow: '0 8px 32px rgba(10,58,107,0.07)',
+                }}>
                     {submitted && resultado ? (
-                        <>
-                            {/* Mantén el header y la barra de progreso completa arriba */}
-                            <ResultadoBlock
-                                resultado={resultado}
-                                email={verifiedUser.email}
-                                onSignOut={onSignOut}
-                            />
-                        </>
-                    ) : submitted ? (
-                        <div style={{ background: 'white', borderRadius: 16, padding: '2.5rem', textAlign: 'center' }}>
-                            <div style={{ fontSize: '3rem', marginBottom: '1rem' }}>✅</div>
-                            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '1.6rem', fontWeight: 800, color: 'var(--navy)' }}>
-                                ¡Evaluación completada!
-                            </h3>
-                            <SignOutButton onSignOut={onSignOut} />
-                        </div>
+                        <ResultadoBlock
+                            resultado={resultado}
+                            email={verifiedUser.email}
+                            onSignOut={onSignOut}
+                        />
                     ) : (
                         <>
-                            {/* Step label */}
-                            <p style={{ fontSize: '0.78rem', color: 'var(--teal)', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '0.5rem' }}>
-                                Paso {current + 1} de {STEPS.length}
-                            </p>
-                            <h3 style={{ fontFamily: 'Syne, sans-serif', fontSize: '1.3rem', fontWeight: 700, color: 'var(--navy)', marginBottom: '0.4rem' }}>
-                                {STEPS[current]}
-                            </h3>
-                            <p style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '2rem' }}>
-                                Todas las preguntas son obligatorias.
-                            </p>
+                            {current === 0 ? (
+                                <div style={{ marginBottom: '2rem' }}>
+                                    <h3 style={{
+                                        fontFamily: 'Syne, sans-serif', fontSize: '1.6rem',
+                                        fontWeight: 800, color: 'var(--navy)', marginBottom: '0.4rem',
+                                    }}>
+                                        Bienvenido
+                                    </h3>
+                                    <p style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+                                        Antes de comenzar, cuéntanos un poco sobre ti.
+                                    </p>
+                                </div>
+                            ) : (
+                                <>
+                                    <p style={{
+                                        fontSize: '0.78rem', color: 'var(--teal)',
+                                        fontWeight: 700, textTransform: 'uppercase',
+                                        letterSpacing: '0.08em', marginBottom: '0.5rem',
+                                    }}>
+                                        Paso {current} de {STEPS.length - 1}
+                                    </p>
+                                    <h3 style={{
+                                        fontFamily: 'Syne, sans-serif', fontSize: '1.3rem',
+                                        fontWeight: 700, color: 'var(--navy)', marginBottom: '0.4rem',
+                                    }}>
+                                        {STEPS[current]}
+                                    </h3>
+                                    <p style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '2rem' }}>
+                                        Todas las preguntas son obligatorias.
+                                    </p>
+                                </>
+                            )}
 
                             {stepError && (
                                 <p style={{ marginBottom: '1rem', color: 'var(--coral)', fontSize: '0.9rem', fontWeight: 600 }}>
                                     {stepError}
                                 </p>
                             )}
-
                             {submitError && (
                                 <p style={{ marginBottom: '1rem', color: 'var(--coral)', fontSize: '0.9rem', fontWeight: 600 }}>
                                     {submitError}
                                 </p>
                             )}
 
-                            {/* Steps */}
-                            {current === 0 && <Step1Form data={data} update={update} />}
-                            {current === 1 && <Step2Form data={data} update={update} />}
-                            {current === 2 && <Step3Form data={data} update={update} />}
-                            {current === 3 && <Step4Form data={data} update={update} />}
-                            {current === 4 && <Step5Form data={data} update={update} />}
-                            {current === 5 && <Step6Form data={data} update={update} />}
+                            {/* ← paso los errores solo al Step0 */}
+                            {current === 0 && <Step0Form data={data} update={update} fromGoogle={fromGoogle} errors={step0Errors} />}
+                            {current === 1 && <Step1Form data={data} update={update} />}
+                            {current === 2 && <Step2Form data={data} update={update} />}
+                            {current === 3 && <Step3Form data={data} update={update} />}
+                            {current === 4 && <Step4Form data={data} update={update} />}
+                            {current === 5 && <Step5Form data={data} update={update} />}
+                            {current === 6 && <Step6Form data={data} update={update} />}
 
-                            {/* Navigation */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '2.5rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.08)' }}>
-
-                                {/* Izquierda: Anterior o Cerrar sesión */}
+                            <div style={{
+                                display: 'flex', justifyContent: 'space-between',
+                                alignItems: 'center', marginTop: '2.5rem',
+                                paddingTop: '1.5rem', borderTop: '1px solid rgba(0,0,0,0.08)',
+                            }}>
                                 {current === 0 ? (
                                     <SignOutButton onSignOut={onSignOut} />
                                 ) : (
-                                    <button
-                                        onClick={back}
-                                        style={{
-                                            padding: '0.8rem 1.8rem', borderRadius: 8,
-                                            border: '2px solid rgba(0,0,0,0.15)', background: 'none',
-                                            fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem', fontWeight: 600,
-                                            color: '#6B7280', cursor: 'pointer',
-                                        }}
-                                    >
+                                    <button onClick={back} style={{
+                                        padding: '0.8rem 1.8rem', borderRadius: 8,
+                                        border: '2px solid rgba(0,0,0,0.15)', background: 'none',
+                                        fontFamily: 'DM Sans, sans-serif', fontSize: '0.9rem',
+                                        fontWeight: 600, color: '#6B7280', cursor: 'pointer',
+                                    }}>
                                         ← Anterior
                                     </button>
                                 )}
 
-                                {/* Centro */}
                                 <span style={{ fontSize: '0.8rem', color: '#6B7280' }}>
-                                    {current + 1} / {STEPS.length}
+                                    {current === 0 ? '·' : `${current} / ${STEPS.length - 1}`}
                                 </span>
 
-                                {/* Derecha: Siguiente o Enviar */}
                                 <button
                                     onClick={current === STEPS.length - 1 ? submit : next}
-                                    disabled={!currentIsValid || submitting}
+                                    disabled={submitting}
                                     style={{
                                         padding: '0.8rem 1.8rem', borderRadius: 8, border: 'none',
                                         background: current === STEPS.length - 1 ? 'var(--teal)' : 'var(--navy)',
                                         color: 'white', fontFamily: 'DM Sans, sans-serif',
                                         fontSize: '0.9rem', fontWeight: 600,
-                                        cursor: (currentIsValid && !submitting) ? 'pointer' : 'not-allowed',
-                                        opacity: (currentIsValid && !submitting) ? 1 : 0.55,
+                                        cursor: !submitting ? 'pointer' : 'not-allowed',
+                                        opacity: !submitting ? 1 : 0.55,
                                         display: 'flex', alignItems: 'center', gap: '0.6rem',
                                     }}
                                 >

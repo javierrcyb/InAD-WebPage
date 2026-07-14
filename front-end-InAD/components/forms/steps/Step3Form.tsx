@@ -29,8 +29,8 @@ export default function Step3Form({ data, update }: Props) {
           >
             <option value="">— Selecciona tu departamento —</option>
             {UBIGEO_DEPARTMENTS.map((department) => (
-              <option key={department.code} value={department.name}>
-                {department.name}
+              <option key={department.codigo} value={department.nombre}>
+                {department.nombre}
               </option>
             ))}
           </select>
@@ -51,8 +51,8 @@ export default function Step3Form({ data, update }: Props) {
           >
             <option value="">— Selecciona tu provincia —</option>
             {provincias.map((province) => (
-              <option key={province.code} value={province.name}>
-                {province.name}
+              <option key={province.codigo} value={province.nombre}>
+                {province.nombre}
               </option>
             ))}
           </select>
@@ -73,8 +73,8 @@ export default function Step3Form({ data, update }: Props) {
           >
             <option value="">— Selecciona tu distrito —</option>
             {distritos.map((district) => (
-              <option key={district.code} value={district.name}>
-                {district.name}
+              <option key={district.codigo} value={district.nombre}>
+                {district.nombre}
               </option>
             ))}
           </select>

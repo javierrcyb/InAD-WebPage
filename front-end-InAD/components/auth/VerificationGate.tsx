@@ -6,7 +6,7 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client'
 import { loginWithGoogle, sendEmailOtp } from '@/lib/auth/verification'
 
 type VerificationGateProps = {
-  onVerified: (user: { id: string; email: string; provider?: string }) => void
+  onVerified: (user: { id: string; email: string; provider?: string, user_metadata?: Record<string, string> }) => void
 }
 
 export default function VerificationGate({ onVerified }: VerificationGateProps) {
@@ -16,26 +16,29 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
   const [busy, setBusy] = useState<'google' | 'email' | null>(null)
   const [linkSent, setLinkSent] = useState(false)
 
-useEffect(() => {
-  const supabase = createBrowserSupabaseClient()
+  useEffect(() => {
+    const supabase = createBrowserSupabaseClient()
 
-  supabase.auth.getSession() // dispara el exchange si hay code en la URL
+    supabase.auth.getSession() // dispara el exchange si hay code en la URL
 
-  const { data } = supabase.auth.onAuthStateChange((event, session) => {
-    if (
-      (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
-      session?.user
-    ) {
-      onVerified({
-        id: session.user.id,
-        email: session.user.email ?? '',
-        provider: session.user.app_metadata?.provider,
-      })
-    }
-  })
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
+        session?.user
+      ) {
+        onVerified({
+          id: session.user.id,
+          email: session.user.email ?? '',
+          provider: session.user.identities?.[0]?.provider ?? session.user.app_metadata?.provider,
+          user_metadata: session.user.user_metadata as Record<string, string>,
+        })
+      }
+    })
 
-  return () => data.subscription.unsubscribe()
-}, [onVerified])
+
+
+    return () => data.subscription.unsubscribe()
+  }, [onVerified])
 
   const handleGoogle = async () => {
     setError('')

@@ -1,32 +1,53 @@
-import ubigeoData from '@/lib/data/ubigeo.json'
+import ubigeoData from '@/lib/data/jerarquia_inad.json'
 
 export interface UbigeoDistrict {
-  code: string
-  name: string
+  codigo: string
+  nombre: string
+  inad: number
+  incidencia_H: number
+  intensidad_A: number
 }
 
 export interface UbigeoProvince {
-  code: string
-  name: string
-  districts: UbigeoDistrict[]
+  codigo: string
+  nombre: string
+  inad: number
+  incidencia_H: number
+  intensidad_A: number
+  distritos: UbigeoDistrict[]
 }
 
 export interface UbigeoDepartment {
-  code: string
-  name: string
-  provinces: UbigeoProvince[]
+  codigo: string
+  nombre: string
+  inad: number
+  incidencia_H: number
+  intensidad_A: number
+  provincias: UbigeoProvince[]
+}
+
+export interface UbigeoMacroregion {
+  codigo: string
+  nombre: string
+  inad: number
+  incidencia_H: number
+  intensidad_A: number
+  departamentos: UbigeoDepartment[]
 }
 
 type UbigeoData = {
-  departments: UbigeoDepartment[]
+  año: number
+  macroregiones: UbigeoMacroregion[]
 }
 
-const { departments } = ubigeoData as UbigeoData
+const { macroregiones } = ubigeoData as UbigeoData
 
-export const UBIGEO_DEPARTMENTS = departments
+export const UBIGEO_MACROREGIONES = macroregiones
+
+export const UBIGEO_DEPARTMENTS = macroregiones.flatMap((macroregion) => macroregion.departamentos)
 
 export const getProvincesByDepartment = (departmentName: string) =>
-  UBIGEO_DEPARTMENTS.find((department) => department.name === departmentName)?.provinces ?? []
+  UBIGEO_DEPARTMENTS.find((department) => department.nombre === departmentName)?.provincias ?? []
 
 export const getDistrictsByProvince = (departmentName: string, provinceName: string) =>
-  getProvincesByDepartment(departmentName).find((province) => province.name === provinceName)?.districts ?? []
+  getProvincesByDepartment(departmentName).find((province) => province.nombre === provinceName)?.distritos ?? []

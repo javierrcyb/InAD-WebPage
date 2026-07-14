@@ -13,25 +13,34 @@ export type NivelEducacion = OptionValue<typeof FORM_DICTIONARIES.nivelEducacion
 export type DominioLectura = OptionValue<typeof FORM_DICTIONARIES.dominioLectura>
 export type IngresoDelHogar = OptionValue<typeof FORM_DICTIONARIES.ingresoDelHogar>
 
-// RESPONDENT
-export type RespondentType = 'self' | 'third_party'  // ← tipo exportado por si lo necesitas
+export type RespondentType = 'self' | 'third_party'
 
 export interface FormData {
+  // Paso 0 -> Datos personales
+  nombre:      string
+  apellido:    string
+  ocupacion:   string
+  institucion: string
+  telefono:    string  // opcional
+
   // Paso 1 -> Perfil
-  respondentType: RespondentType | null  
-  sexo: Sexo | null
-  edad: EdadGrupo | null
-  lengua: LenguaMaterna | null          // lengua materna principal
-  otrasLenguas: LenguaMaterna[] 
+  respondentType: RespondentType | null
+  sexo:           Sexo | null
+  edad:           EdadGrupo | null
+  lengua:         LenguaMaterna | null
+  otrasLenguas:   LenguaMaterna[]
+
   // Paso 2 -> Educación e ingresos
-  nivelEducacion: NivelEducacion | null
-  dominioLectura: DominioLectura | null
+  nivelEducacion:  NivelEducacion | null
+  dominioLectura:  DominioLectura | null
   ingresoDelHogar: IngresoDelHogar | null
+
   // Paso 3 -> Ubicación
-  region: Region | ''
+  region:       Region | ''
   departamento: string
-  provincia: string
-  distrito: string
+  provincia:    string
+  distrito:     string
+
   // Paso 4 -> P316
   p316: {
     p1:  boolean | null
@@ -47,37 +56,36 @@ export interface FormData {
 
   // Paso 5 -> BLOQUE INTELIGENCIA ARTIFICIAL
   preguntasIA: {
-    IAB1: boolean | null,
-    IAB2: boolean | null,
-    IAB3: boolean | null,
-    IAI1: boolean | null,
-    IAI2: boolean | null,
-    IAI3: boolean | null,
-    IAI4: boolean | null,
-    IAA1: boolean | null,
-    IAA2: boolean | null,
-    IAA3: boolean | null,
+    IAB1: boolean | null
+    IAB2: boolean | null
+    IAB3: boolean | null
+    IAI1: boolean | null
+    IAI2: boolean | null
+    IAI3: boolean | null
+    IAI4: boolean | null
+    IAA1: boolean | null
+    IAA2: boolean | null
+    IAA3: boolean | null
   }
 
   // Paso 6 -> BLOQUE CIBERESPACIO
   preguntasCiberespacio: {
-    CSB1: boolean | null,
-    CSB2: boolean | null,
-    CSB3: boolean | null,
-    CSI1: boolean | null,
-    CSI2: boolean | null,
-    CSI3: boolean | null,
-    CSI4: boolean | null,
-    CSA1: boolean | null,
-    CSA2: boolean | null,
-    CSA3: boolean | null,
+    CSB1: boolean | null
+    CSB2: boolean | null
+    CSB3: boolean | null
+    CSI1: boolean | null
+    CSI2: boolean | null
+    CSI3: boolean | null
+    CSI4: boolean | null
+    CSA1: boolean | null
+    CSA2: boolean | null
+    CSA3: boolean | null
   }
-
 }
 
-
 export const INITIAL_FORM: FormData = {
-  respondentType: null,  // ← aquí también
+  nombre: '', apellido: '', ocupacion: '', institucion: '', telefono: '',
+  respondentType: null,
   sexo: null, edad: null, lengua: null, otrasLenguas: [],
   nivelEducacion: null, dominioLectura: null, ingresoDelHogar: null,
   region: '', departamento: '', provincia: '', distrito: '',

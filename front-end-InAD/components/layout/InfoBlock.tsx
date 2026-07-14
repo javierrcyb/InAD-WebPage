@@ -66,7 +66,7 @@ export default function InfoBlock() {
                     {/* texto izquiera */}
                     <div>
                         <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>
-                            El <strong style={{ color: '#1A1A2E' }}>Índice de Inclusión Digital </strong> en la Encuesta Nacional de Hogares (ENAHO), mide cómo las personas usan y aprovechan internet en su vida diaria. Basado en datos de la ENAHO del INEI, evalúa actividades como educación, banca digital, trámites, comercio electrónico y acceso a servicios digitales.
+                            El <strong style={{ color: '#1A1A2E' }}>Índice de Actividad Digital </strong>, mide cómo las personas usan y aprovechan internet en su vida diaria. Basado en datos de la ENAHO del INEI, evalúa actividades como educación, banca digital, trámites, comercio electrónico y acceso a servicios digitales.
                         </p>
 
                         <p style={{ fontSize: '1rem', lineHeight: 1.8, color: '#6B7280', marginBottom: '1.25rem' }}>

@@ -1,49 +1,85 @@
 // lib/calculations/InAdCalculation.ts
 
 import { FormData } from '@/types'
-import ubigeoRaw from '@/lib/data/ubigeo.json'
+import jerarquiaRaw from '@/lib/data/jerarquia_inad.json'
 
-// ── MACRO REGIONES ────────────────────────────────────────────────────────────
+// ── ESTRUCTURA DEL JSON (lib/data/jerarquia_inad.json) ────────────────────────
+//
+// {
+//   "año": 2025,
+//   "macroregiones": [
+//     {
+//       "nombre": "CENTRO", "codigo": "M4", "inad": 0.237267,
+//       "incidencia_H": 0.765216, "intensidad_A": 0.310066,
+//       "departamentos": [
+//         {
+//           "nombre": "ANCASH", "codigo": "02", "inad": 0.24681,
+//           "incidencia_H": 0.784113, "intensidad_A": 0.314763,
+//           "provincias": [
+//             {
+//               "nombre": "AIJA", "codigo": "0202", "inad": 0.084046,
+//               "incidencia_H": 0.404418, "intensidad_A": 0.20782,
+//               "distritos": [
+//                 {
+//                   "nombre": "CORIS", "codigo": "020202", "inad": 0.065412,
+//                   "incidencia_H": 0.366802, "intensidad_A": 0.178332
+//                 }
+//               ]
+//             }
+//           ]
+//         }
+//       ]
+//     }
+//   ]
+// }
 
-const MACRO_REGION: Record<string, string> = {
-  'Tumbes':        'Norte',   'Piura':         'Norte',
-  'Lambayeque':    'Norte',   'La Libertad':   'Norte',
-  'Cajamarca':     'Norte',   'Áncash':        'Norte',
-  'Lima':          'Centro',  'Callao':        'Centro',
-  'Ica':           'Centro',  'Junín':         'Centro',
-  'Huancavelica':  'Centro',  'Pasco':         'Centro',
-  'Huánuco':       'Centro',
-  'Arequipa':      'Sur',     'Moquegua':      'Sur',
-  'Tacna':         'Sur',     'Puno':          'Sur',
-  'Cusco':         'Sur',     'Apurímac':      'Sur',
-  'Ayacucho':      'Sur',
-  'Loreto':        'Oriente', 'Ucayali':       'Oriente',
-  'San Martín':    'Oriente', 'Amazonas':      'Oriente',
-  'Madre de Dios': 'Oriente',
+interface JerDistrito { nombre: string; codigo: string; inad: number; incidencia_H?: number; intensidad_A?: number }
+interface JerProvincia { nombre: string; codigo: string; inad: number; incidencia_H?: number; intensidad_A?: number; distritos: JerDistrito[] }
+interface JerDep { nombre: string; codigo: string; inad: number; incidencia_H?: number; intensidad_A?: number; provincias: JerProvincia[] }
+interface JerMacro { nombre: string; codigo: string; inad: number; incidencia_H?: number; intensidad_A?: number; departamentos: JerDep[] }
+interface JerRoot { año: number; inad?: number; macroregiones: JerMacro[] }
+
+const JERARQUIA = jerarquiaRaw as JerRoot
+
+// Los nombres en el JSON vienen en MAYÚSCULAS y sin tildes (ej. "ANCASH", "JUNIN").
+// Los del formulario vienen con tildes y capitalización normal (ej. "Áncash", "Junín").
+// Esta función normaliza ambos lados para poder compararlos.
+function normalizar(texto: string): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // quita tildes
+    .trim()
+    .toUpperCase()
 }
 
-// ── BENCHMARKS ────────────────────────────────────────────────────────────────
-// Promedios referenciales ENAHO 2022 — actualizar cuando tengas data real
+function buscarDepartamento(nombreDep: string): { macro: JerMacro | undefined; dep: JerDep | undefined } {
+  const objetivo = normalizar(nombreDep)
+  for (const macro of JERARQUIA.macroregiones) {
+    const dep = macro.departamentos.find(d => normalizar(d.nombre) === objetivo)
+    if (dep) return { macro, dep }
+  }
+  return { macro: undefined, dep: undefined }
+}
 
-const BENCHMARKS = {
-  nacional: 0.44,
-  macroRegion: {
-    'Norte':   0.41,
-    'Centro':  0.52,
-    'Sur':     0.43,
-    'Oriente': 0.31,
-  } as Record<string, number>,
-  departamento: {
-    'Amazonas':      0.28, 'Áncash':        0.40, 'Apurímac':      0.33,
-    'Arequipa':      0.55, 'Ayacucho':      0.34, 'Cajamarca':     0.31,
-    'Callao':        0.62, 'Cusco':         0.43, 'Huancavelica':  0.28,
-    'Huánuco':       0.33, 'Ica':           0.50, 'Junín':         0.43,
-    'La Libertad':   0.43, 'Lambayeque':    0.44, 'Lima':          0.65,
-    'Loreto':        0.29, 'Madre de Dios': 0.38, 'Moquegua':      0.52,
-    'Pasco':         0.36, 'Piura':         0.41, 'Puno':          0.36,
-    'San Martín':    0.37, 'Tacna':         0.56, 'Tumbes':        0.44,
-    'Ucayali':       0.35,
-  } as Record<string, number>,
+function buscarProvincia(dep: JerDep | undefined, nombreProv: string): JerProvincia | undefined {
+  if (!dep) return undefined
+  const objetivo = normalizar(nombreProv)
+  return dep.provincias.find(p => normalizar(p.nombre) === objetivo)
+}
+
+function buscarDistrito(prov: JerProvincia | undefined, nombreDist: string): JerDistrito | undefined {
+  if (!prov) return undefined
+  const objetivo = normalizar(nombreDist)
+  return prov.distritos.find(d => normalizar(d.nombre) === objetivo)
+}
+
+// Promedio nacional: usa el campo raíz "inad" si existe, si no promedia las macroregiones.
+function calcularInadNacional(): number {
+  if (typeof JERARQUIA.inad === 'number') return JERARQUIA.inad
+  const macros = JERARQUIA.macroregiones
+  if (!macros.length) return 0
+  const suma = macros.reduce((acc, m) => acc + m.inad, 0)
+  return suma / macros.length
 }
 
 // ── CURSOS POR ACTIVIDAD P316 ─────────────────────────────────────────────────
@@ -61,15 +97,15 @@ const CURSOS_P316: Record<P316Key, {
     descripcion: 'Aprende a buscar, filtrar y verificar información confiable en internet.',
     cursos: [
       { nombre: 'Habilidades digitales para principiantes', plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate', duracion: '4 h' },
-      { nombre: 'Alfabetización digital',                   plataforma: 'PerúEduca',        url: 'https://www.perueduca.pe',                    duracion: '6 h' },
+      { nombre: 'Alfabetización digital', plataforma: 'PerúEduca', url: 'https://www.perueduca.pe', duracion: '6 h' },
     ],
   },
   p2: {
     tema: 'Comunicación digital',
     descripcion: 'Domina el correo electrónico, videollamadas y herramientas de colaboración.',
     cursos: [
-      { nombre: 'Gmail y Google Meet',                plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate', duracion: '3 h' },
-      { nombre: 'Comunicación en entornos digitales', plataforma: 'Coursera',        url: 'https://www.coursera.org',                    duracion: '8 h' },
+      { nombre: 'Gmail y Google Meet', plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate', duracion: '3 h' },
+      { nombre: 'Comunicación en entornos digitales', plataforma: 'Coursera', url: 'https://www.coursera.org', duracion: '8 h' },
     ],
   },
   p3: {
@@ -77,15 +113,15 @@ const CURSOS_P316: Record<P316Key, {
     descripcion: 'Compra de forma segura en tiendas online y marketplaces.',
     cursos: [
       { nombre: 'Compras seguras en internet', plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate', duracion: '2 h' },
-      { nombre: 'Introducción al e-commerce',  plataforma: 'EDteam',          url: 'https://ed.team',                             duracion: '5 h' },
+      { nombre: 'Introducción al e-commerce', plataforma: 'EDteam', url: 'https://ed.team', duracion: '5 h' },
     ],
   },
   p4: {
     tema: 'Banca electrónica y finanzas digitales',
     descripcion: 'Usa la banca por internet, billeteras digitales y pagos electrónicos.',
     cursos: [
-      { nombre: 'Educación financiera digital', plataforma: 'SBS Perú',    url: 'https://www.sbs.gob.pe/educacion-financiera', duracion: '4 h' },
-      { nombre: 'Pagos digitales en el Perú',   plataforma: 'YouTube SBS', url: 'https://www.youtube.com/@SBSPeru',            duracion: '2 h' },
+      { nombre: 'Educación financiera digital', plataforma: 'SBS Perú', url: 'https://www.sbs.gob.pe/educacion-financiera', duracion: '4 h' },
+      { nombre: 'Pagos digitales en el Perú', plataforma: 'YouTube SBS', url: 'https://www.youtube.com/@SBSPeru', duracion: '2 h' },
     ],
   },
   p5: {
@@ -93,7 +129,7 @@ const CURSOS_P316: Record<P316Key, {
     descripcion: 'Aprovecha plataformas de e-learning para formarte profesionalmente.',
     cursos: [
       { nombre: 'Aprender a aprender', plataforma: 'Coursera', url: 'https://www.coursera.org/learn/learning-how-to-learn', duracion: '10 h' },
-      { nombre: 'Cursos certificados', plataforma: 'EDX',       url: 'https://www.edx.org',                                 duracion: 'Variable' },
+      { nombre: 'Cursos certificados', plataforma: 'EDX', url: 'https://www.edx.org', duracion: 'Variable' },
     ],
   },
   p6: {
@@ -101,23 +137,23 @@ const CURSOS_P316: Record<P316Key, {
     descripcion: 'Realiza trámites en SUNAT, RENIEC, ESSALUD y otros portales del Estado.',
     cursos: [
       { nombre: 'Servicios digitales del Estado', plataforma: 'SERVIR', url: 'https://www.servir.gob.pe', duracion: '3 h' },
-      { nombre: 'Trámites en línea paso a paso',  plataforma: 'gob.pe', url: 'https://www.gob.pe',        duracion: '2 h' },
+      { nombre: 'Trámites en línea paso a paso', plataforma: 'gob.pe', url: 'https://www.gob.pe', duracion: '2 h' },
     ],
   },
   p7: {
     tema: 'Entretenimiento y cultura digital',
     descripcion: 'Consume contenido digital de forma segura y crítica.',
     cursos: [
-      { nombre: 'Ciudadanía digital',                      plataforma: 'Khan Academy', url: 'https://es.khanacademy.org', duracion: '4 h' },
-      { nombre: 'Consumo responsable de medios digitales', plataforma: 'PerúEduca',    url: 'https://www.perueduca.pe',   duracion: '3 h' },
+      { nombre: 'Ciudadanía digital', plataforma: 'Khan Academy', url: 'https://es.khanacademy.org', duracion: '4 h' },
+      { nombre: 'Consumo responsable de medios digitales', plataforma: 'PerúEduca', url: 'https://www.perueduca.pe', duracion: '3 h' },
     ],
   },
   p8: {
     tema: 'Venta de productos y servicios en línea',
     descripcion: 'Vende productos online usando marketplaces y redes sociales.',
     cursos: [
-      { nombre: 'Vende en línea con Google',       plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate',     duracion: '6 h' },
-      { nombre: 'Marketing digital para negocios', plataforma: 'Meta Blueprint',  url: 'https://www.facebook.com/business/learn',          duracion: '5 h' },
+      { nombre: 'Vende en línea con Google', plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate', duracion: '6 h' },
+      { nombre: 'Marketing digital para negocios', plataforma: 'Meta Blueprint', url: 'https://www.facebook.com/business/learn', duracion: '5 h' },
     ],
   },
   p12: {
@@ -125,7 +161,7 @@ const CURSOS_P316: Record<P316Key, {
     descripcion: 'Protege tu información, evita estafas y mantén tus dispositivos seguros.',
     cursos: [
       { nombre: 'Seguridad en internet', plataforma: 'Google Actívate', url: 'https://learndigital.withgoogle.com/activate', duracion: '4 h' },
-      { nombre: 'Ciberseguridad básica', plataforma: 'Cisco NetAcad',   url: 'https://www.netacad.com',                     duracion: '8 h' },
+      { nombre: 'Ciberseguridad básica', plataforma: 'Cisco NetAcad', url: 'https://www.netacad.com', duracion: '8 h' },
     ],
   },
 }
@@ -133,73 +169,43 @@ const CURSOS_P316: Record<P316Key, {
 // ── TIPOS DE SALIDA ───────────────────────────────────────────────────────────
 
 export interface TemaResultado {
-  key:         P316Key
-  tema:        string
+  key: P316Key
+  tema: string
   descripcion: string
-  cursos:      { nombre: string; plataforma: string; url: string; duracion: string }[]
+  cursos: { nombre: string; plataforma: string; url: string; duracion: string }[]
 }
 
 export interface ResultadoINAD {
-  // Cálculo principal
-  score:           number
-  inad:            number          
-  inad_porcentaje: number          
-  nivel:           'Novato Digital' | 'Entusiasta Digital' | 'Ciudadano Digital' | 'Productor Digital'
-  nivel_color:     string
+  nombre: string
+  score: number
+  inad: number
+  inad_porcentaje: number
+  nivel: 'Novato Digital' | 'Entusiasta Digital' | 'Ciudadano Digital' | 'Productor Digital'
+  nivel_color: string
 
-  // Geografía
-  ubigeo_departamento: string      
-  ubigeo_provincia:    string      
-  ubigeo_distrito:     string      
-  departamento:        string
-  provincia:           string
-  distrito:            string
-  macroRegion:         string
+  // Geografía (códigos tomados directamente del JSON)
+  ubigeo_departamento: string
+  ubigeo_provincia: string
+  ubigeo_distrito: string
+  departamento: string
+  provincia: string
+  distrito: string
+  macroRegion: string
 
   // Comparativas (0–100)
-  inad_ubigeo:       number
+  inad_ubigeo: number
   inad_departamento: number
-  inad_macroRegion:  number
-  inad_nacional:     number
+  inad_macroRegion: number
+  inad_nacional: number
 
   // Diferencias vs usuario (positivo = por encima, negativo = por debajo)
-  diff_ubigeo:       number
+  diff_ubigeo: number
   diff_departamento: number
-  diff_macroRegion:  number
-  diff_nacional:     number
+  diff_macroRegion: number
+  diff_nacional: number
 
-  // Temas
   temas_desarrollar: TemaResultado[]
-  temas_dominados:   TemaResultado[]
-}
-
-// ── HELPERS UBIGEO ────────────────────────────────────────────────────────────
-
-interface UbigeoDistrito  { code: string; name: string }
-interface UbigeoProvincia { code: string; name: string; districts: UbigeoDistrito[] }
-interface UbigeoDep       { code: string; name: string; provinces: UbigeoProvincia[] }
-
-function buscarUbigeo(
-  depName:  string,
-  provName: string,
-  distName: string,
-): { ubigeo_dep: string; ubigeo_prov: string; ubigeo_dist: string } {
-
-  const deps = (ubigeoRaw as { departments: UbigeoDep[] }).departments
-
-  const dep  = deps.find(d => d.name.toLowerCase() === depName.toLowerCase())
-  if (!dep)  return { ubigeo_dep: '00', ubigeo_prov: '0000', ubigeo_dist: '000000' }
-
-  const prov = dep.provinces.find(p => p.name.toLowerCase() === provName.toLowerCase())
-  if (!prov) return { ubigeo_dep: dep.code, ubigeo_prov: '0000', ubigeo_dist: '000000' }
-
-  const dist = prov.districts.find(d => d.name.toLowerCase() === distName.toLowerCase())
-
-  return {
-    ubigeo_dep:  dep.code,
-    ubigeo_prov: prov.code,
-    ubigeo_dist: dist?.code ?? '000000',
-  }
+  temas_dominados: TemaResultado[]
 }
 
 // ── FUNCIÓN PRINCIPAL ─────────────────────────────────────────────────────────
@@ -212,81 +218,88 @@ export function calcularINAD(form: FormData): ResultadoINAD {
   }, 0)
 
   // 2. INAD individual = score / 9
-  const inad            = score / 9
-  const inad_porcentaje = Math.round(inad)
+  const inad = score / 9
+  const inad_porcentaje = Math.round(inad * 100)
 
   // 3. Nivel con colores corporativos
-  let nivel:       'Novato Digital' | 'Entusiasta Digital' | 'Ciudadano Digital' | 'Productor Digital'
+  let nivel: 'Novato Digital' | 'Entusiasta Digital' | 'Ciudadano Digital' | 'Productor Digital'
   let nivel_color: string
 
-  if      (inad < 0.17) { nivel = 'Novato Digital';  nivel_color = '#D36356' }
+  if (inad < 0.17) { nivel = 'Novato Digital'; nivel_color = '#D36356' }
   else if (inad < 0.5) { nivel = 'Entusiasta Digital'; nivel_color = '#F58231' }
   else if (inad < 0.83) { nivel = 'Ciudadano Digital'; nivel_color = '#F5C231' }
-  else                  { nivel = 'Productor Digital';  nivel_color = '#4A979A' }
+  else { nivel = 'Productor Digital'; nivel_color = '#4A979A' }
 
-  // 4. Ubigeo desde JSON
-  const { ubigeo_dep, ubigeo_prov, ubigeo_dist } = buscarUbigeo(
-    form.departamento,
-    form.provincia,
-    form.distrito,
-  )
+  // 4. Búsqueda en cascada dentro de jerarquia_inad.json:
+  //    macroregión → departamento → provincia → distrito
+  const { macro, dep } = buscarDepartamento(form.departamento)
+  const prov = buscarProvincia(dep, form.provincia)
+  const dist = buscarDistrito(prov, form.distrito)
 
-  // 5. Macro región
-  const macroRegion = MACRO_REGION[form.departamento] ?? 'Centro'
+  // 5. Códigos ubigeo tomados directamente del JSON (no hay archivo separado)
+  const ubigeo_dep = dep?.codigo ?? '00'
+  const ubigeo_prov = prov?.codigo ?? '0000'
+  const ubigeo_dist = dist?.codigo ?? '000000'
 
-  // 6. Benchmarks
-  const bench_ubigeo = 1
-  const bench_dep   = BENCHMARKS.departamento[form.departamento] ?? BENCHMARKS.nacional
-  const bench_macro = BENCHMARKS.macroRegion[macroRegion]        ?? BENCHMARKS.nacional
-  const bench_nac   = BENCHMARKS.nacional
+  // 6. Macro región: nombre tal como aparece en el JSON
+  const macroRegion = macro?.nombre ?? ''
 
-  const inad_ubigeo = Math.round(bench_ubigeo)
-  const inad_dep   = Math.round(bench_dep)
-  const inad_macro = Math.round(bench_macro)
-  const inad_nac   = Math.round(bench_nac)
+  // 7. Benchmarks: el inad más específico disponible para "mi ubigeo",
+  //    con fallback en cascada distrito → provincia → departamento → nacional
+  const bench_ubigeo = dist?.inad ?? prov?.inad ?? dep?.inad ?? calcularInadNacional()
+  const bench_dep = dep?.inad ?? calcularInadNacional()
+  const bench_macro = macro?.inad ?? calcularInadNacional()
+  const bench_nac = calcularInadNacional()
 
-  // 7. Temas según respuesta
+  // Los valores del JSON vienen como fracción (0–1); se expresan en escala 0–100
+  // para que sean comparables con inad_porcentaje.
+  const inad_ubigeo = bench_ubigeo
+  const inad_dep = bench_dep
+  const inad_macro = bench_macro
+  const inad_nac = bench_nac
+
+  // 8. Temas según respuesta
   const temas_desarrollar: TemaResultado[] = []
-  const temas_dominados:   TemaResultado[] = []
+  const temas_dominados: TemaResultado[] = []
 
   P316_KEYS.forEach(key => {
     const info = CURSOS_P316[key]
     const tema: TemaResultado = {
       key,
-      tema:        info.tema,
+      tema: info.tema,
       descripcion: info.descripcion,
-      cursos:      info.cursos,
+      cursos: info.cursos,
     }
     if (form.p316[key] === true) temas_dominados.push(tema)
-    else                         temas_desarrollar.push(tema)
+    else temas_desarrollar.push(tema)
   })
 
-  // 8. Resultado completo
+  // 9. Resultado completo
   return {
     score,
+    nombre: form.nombre,
     inad,
     inad_porcentaje,
     nivel,
     nivel_color,
 
     ubigeo_departamento: ubigeo_dep,
-    ubigeo_provincia:    ubigeo_prov,
-    ubigeo_distrito:     ubigeo_dist,
-    departamento:        form.departamento,
-    provincia:           form.provincia,
-    distrito:            form.distrito,
-    macroRegion:         form.departamento ? (MACRO_REGION[form.departamento] ?? 'Centro') : 'Centro',
+    ubigeo_provincia: ubigeo_prov,
+    ubigeo_distrito: ubigeo_dist,
+    departamento: form.departamento,
+    provincia: form.provincia,
+    distrito: form.distrito,
+    macroRegion,
 
-    inad_ubigeo:       inad_ubigeo,
+    inad_ubigeo: inad_ubigeo,
     inad_departamento: inad_dep,
-    inad_macroRegion:  inad_macro,
-    inad_nacional:     inad_nac,
+    inad_macroRegion: inad_macro,
+    inad_nacional: inad_nac,
 
-
-    diff_ubigeo:       inad_porcentaje - inad_ubigeo,
-    diff_departamento: inad_porcentaje - inad_dep,
-    diff_macroRegion:  inad_porcentaje - inad_macro,
-    diff_nacional:     inad_porcentaje - inad_nac,
+    diff_ubigeo: inad - inad_ubigeo,
+    diff_departamento: inad - inad_dep,
+    diff_macroRegion: inad - inad_macro,
+    diff_nacional: inad - inad_nac,
 
     temas_desarrollar,
     temas_dominados,

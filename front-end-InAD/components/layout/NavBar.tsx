@@ -25,7 +25,6 @@ export default function NavBar() {
             </a>
             <div className="flex items-center gap-6">
                 <a href="#info" className="text-base font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>¿Qué es?</a>
-                <a href="#verificacion" className="text-base font-medium" style={{ color: 'var(--bg)', textDecoration: 'none' }}>Evaluación</a>
                 <a
                     href="https://neurometrics.la/"
                     target="_blank"
@@ -39,6 +38,7 @@ export default function NavBar() {
                         style={{ width: '1em', height: '1em', filter: 'brightness(0) invert(1)' }}
                     />
                 </a>
+                                <a href="#verificacion" className="text-base font-medium" style={{ color: 'var(--bg)', textDecoration: 'none', backgroundColor: 'var(--navy)', padding: '0.5rem 1rem', borderRadius: '0.50rem' }}>Evaluación</a>
             </div>
         </nav>
     )

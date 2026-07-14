@@ -9,7 +9,8 @@ import { createBrowserSupabaseClient } from '@/lib/supabase/client'
 type VerifiedUser = {
   id: string
   email: string
-  provider?: string
+  provider?: string,
+  user_metadata?: Record<string, string>
 }
 
 export default function EvaluationFlow() {
