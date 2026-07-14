@@ -1,41 +1,32 @@
-import { createBrowserSupabaseClient } from '@/lib/supabase/client'
+// lib/auth/verification.ts
 
-function getRedirectTo() {
-  if (typeof window === 'undefined') return undefined
-  return `${window.location.origin}/auth/callback`
-}
-
-export async function loginWithGoogle() {
-  const supabase = createBrowserSupabaseClient()
-
-  return supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: {
-      redirectTo: getRedirectTo(),
-      queryParams: {
-        prompt: 'select_account',
-      },
-    },
-  })
+export function loginWithGoogle() {
+  // Server-side redirect completo — no hay llamada a Supabase desde el cliente
+  window.location.href = '/api/auth/google'
 }
 
 export async function sendEmailOtp(email: string) {
-  const supabase = createBrowserSupabaseClient()
-
-  return supabase.auth.signInWithOtp({
-    email,
-    options: {
-      shouldCreateUser: true
-    },
+  const res = await fetch('/api/auth/send-otp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
   })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    return { error: new Error(data.error) }
+  }
+
+  return { error: null }
 }
 
-export async function verifyEmailOtp(email: string, token: string) {
-  const supabase = createBrowserSupabaseClient()
+export async function getCurrentUser() {
+  const res = await fetch('/api/auth/session')
+  const data = await res.json()
+  return data.user as { id: string; email: string; provider?: string; user_metadata?: Record<string, string> } | null
+}
 
-  return supabase.auth.verifyOtp({
-    email,
-    token,
-    type: 'email',
-  })
+export async function signOut() {
+  await fetch('/api/auth/signout', { method: 'POST' })
 }

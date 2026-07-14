@@ -1,14 +1,19 @@
 // app/auth/callback/route.ts
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
 
-  if (!code) {
-    return NextResponse.redirect(`${origin}/#verificacion`)
+  if (code) {
+    const supabase = await createServerSupabaseClient()
+    const { error } = await supabase.auth.exchangeCodeForSession(code)
+
+    if (!error) {
+      return NextResponse.redirect(`${origin}/#verificacion`)
+    }
   }
 
-  // Pasa el code al cliente para que Supabase complete el PKCE exchange
-  return NextResponse.redirect(`${origin}/?code=${code}#verificacion`)
+  return NextResponse.redirect(`${origin}/#verificacion?error=auth`)
 }

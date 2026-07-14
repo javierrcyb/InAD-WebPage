@@ -11,8 +11,7 @@ import Step5Form from './steps/Step5Form'
 import Step6Form from './steps/Step6Form'
 import ResultadoBlock from './ResultadoBlock'
 import { stepSchemas } from '@/lib/validations/form'
-import { completeFormResponse, getFormResponse, saveFormDraft } from '@/lib/supabase/responses'
-import { createBrowserSupabaseClient } from '@/lib/supabase/client'
+import { completeFormResponse, getFormResponse, saveFormDraft } from '@/lib/api/responses'
 import { calcularINAD, ResultadoINAD } from '@/lib/calculations/InAdCalculation'
 import { Loader2 } from 'lucide-react'
 
@@ -101,6 +100,7 @@ function SignOutButton({ onSignOut }: { onSignOut: () => Promise<void> }) {
 
 // ── Tipos de errores ──────────────────────────────────────────────
 type Step0Errors = Partial<Record<'nombre' | 'apellido' | 'ocupacion' | 'institucion' | 'telefono', string>>
+type Step6Errors = Partial<Record<'tratamientoDatos', string>>
 
 export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [current, setCurrent] = useState(0)
@@ -113,7 +113,8 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
     const [completed, setCompleted] = useState(false)
     const [resultado, setResultado] = useState<ResultadoINAD | null>(null)
     const [fromGoogle, setFromGoogle] = useState(false)
-    const [step0Errors, setStep0Errors] = useState<Step0Errors>({})  // ← nuevo
+    const [step0Errors, setStep0Errors] = useState<Step0Errors>({})
+    const [step6Errors, setStep6Errors] = useState<Step6Errors>({})  // ← nuevo
 
     useEffect(() => {
         let mounted = true
@@ -162,6 +163,10 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
 
     const update = (fields: Partial<FormData>) => {
         setStepError('')
+        // Limpiar error de tratamientoDatos en cuanto el usuario lo marque
+        if ('tratamientoDatos' in fields) {
+            setStep6Errors({})
+        }
         setData(prev => ({ ...prev, ...fields }))
     }
 
@@ -178,34 +183,19 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
         const result = stepSchemas[current].safeParse(data)
         console.log('data.telefono:', JSON.stringify(data.telefono))
         console.log('safeParse result:', JSON.stringify(result, null, 2))
-
-       //  if (!result.success) {
-            // Si es el paso 0, extraer errores por campo
-       //      if (current === 0) {
-       //          const fieldErrors = result.error.flatten().fieldErrors
-        //         setStep0Errors(
-         //            Object.fromEntries(
-        //                 Object.entries(fieldErrors).map(([k, v]) => [k, (v as string[])?.[0]])
-        //             ) as Step0Errors
-    //        )
-        //    }
-        //    setStepError('Completa todas las respuestas para continuar.')
-       //     return
- //       }
-
-     //   setStepError('')
-       // setStep0Errors({})
         setCurrent(s => Math.min(s + 1, STEPS.length - 1))
     }
 
     const back = () => setCurrent(s => Math.max(s - 1, 0))
 
     const submit = async () => {
-        //if (!stepSchemas[current].safeParse(data).success) {
-        //    setStepError('Completa todas las respuestas para continuar.')
-          //  return
-        //}
+        // Validación del checkbox obligatorio
+        if (!data.tratamientoDatos) {
+            setStep6Errors({ tratamientoDatos: 'Debes aceptar el tratamiento de datos personales para continuar.' })
+            return
+        }
 
+        setStep6Errors({})
         setStepError('')
         setSubmitting(true)
         setSubmitError('')
@@ -341,14 +331,13 @@ export default function FormBlock({ verifiedUser, onSignOut }: FormBlockProps) {
                                 </p>
                             )}
 
-                            {/* ← paso los errores solo al Step0 */}
                             {current === 0 && <Step0Form data={data} update={update} fromGoogle={fromGoogle} errors={step0Errors} />}
                             {current === 1 && <Step1Form data={data} update={update} />}
                             {current === 2 && <Step2Form data={data} update={update} />}
                             {current === 3 && <Step3Form data={data} update={update} />}
                             {current === 4 && <Step4Form data={data} update={update} />}
                             {current === 5 && <Step5Form data={data} update={update} />}
-                            {current === 6 && <Step6Form data={data} update={update} />}
+                            {current === 6 && <Step6Form data={data} update={update} errors={step6Errors} />}
 
                             <div style={{
                                 display: 'flex', justifyContent: 'space-between',

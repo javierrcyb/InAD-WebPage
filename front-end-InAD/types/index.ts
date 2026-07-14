@@ -1,3 +1,5 @@
+// types/index.ts
+
 import { FORM_DICTIONARIES } from "@/lib/constants/dictionaries"
 
 type OptionValue<T extends readonly { value: number }[]> = T[number]['value']
@@ -21,7 +23,7 @@ export interface FormData {
   apellido:    string
   ocupacion:   string
   institucion: string
-  telefono:    string  // opcional
+  telefono:    string
 
   // Paso 1 -> Perfil
   respondentType: RespondentType | null
@@ -81,6 +83,11 @@ export interface FormData {
     CSA2: boolean | null
     CSA3: boolean | null
   }
+
+  // Paso 6 -> Consentimientos (al final del formulario)
+  boletinNeurometrics: boolean   // opcional
+  aceptaAliados:       boolean   // opcional
+  tratamientoDatos:    boolean   // obligatorio
 }
 
 export const INITIAL_FORM: FormData = {
@@ -92,4 +99,7 @@ export const INITIAL_FORM: FormData = {
   p316: { p1: null, p2: null, p3: null, p4: null, p5: null, p6: null, p7: null, p8: null, p12: null },
   preguntasIA: { IAB1: null, IAB2: null, IAB3: null, IAI1: null, IAI2: null, IAI3: null, IAI4: null, IAA1: null, IAA2: null, IAA3: null },
   preguntasCiberespacio: { CSB1: null, CSB2: null, CSB3: null, CSI1: null, CSI2: null, CSI3: null, CSI4: null, CSA1: null, CSA2: null, CSA3: null },
+  boletinNeurometrics: false,
+  aceptaAliados:       false,
+  tratamientoDatos:    false,
 }

@@ -1,0 +1,170 @@
+    {
+  "p1": {
+    "tema": "Búsqueda de información",
+    "descripcion": "Aprende a buscar y filtrar información confiable en internet usando herramientas como Google.",
+    "cursos": [
+      {
+        "nombre": "Introducción a la búsqueda de información en internet",
+        "plataforma": "MINEDU",
+        "url": "https://www.minedu.gob.pe/conectados/pdf/estudiantes/guias/guia_busqueda_de_informacion.pdf",
+        "duracion": "1 hora"
+      },
+      {
+        "nombre": "Cómo usar el buscador de Google",
+        "plataforma": "YouTube - Walter Enrique Ruiz Diaz",
+        "url": "https://www.youtube.com/watch?v=cDOHKZioslQ",
+        "duracion": "30 minutos"
+      }
+    ]
+  },
+  "p2": {
+    "tema": "Comunicarse (e-mail, chat, videollamada, etc.)",
+    "descripcion": "Domina las herramientas digitales de comunicación: redes sociales, correo electrónico y mensajería instantánea.",
+    "cursos": [
+      {
+        "nombre": "Cómo usar Facebook: cómo crear una cuenta",
+        "plataforma": "YouTube - LearnFree en Español",
+        "url": "https://www.youtube.com/watch?v=jLrLYycxqio&list=PLEB6F339ECBC8F09D",
+        "duracion": "1 hora"
+      },
+      {
+        "nombre": "Cómo crear un correo electrónico",
+        "plataforma": "YouTube - LearnFree en Español",
+        "url": "https://www.youtube.com/watch?v=ni_w00FkcNY&list=PLQVIjL9XTrQ20L4QuOjpwSUe1Vh78pEOM",
+        "duracion": "1 hora"
+      },
+      {
+        "nombre": "Cómo usar WhatsApp paso a paso - 2026",
+        "plataforma": "YouTube - Video Tutoriales Web",
+        "url": "https://www.youtube.com/watch?v=jrujkYObjB8",
+        "duracion": "1 hora"
+      }
+    ]
+  },
+  "p3": {
+    "tema": "Comprar productos y/o servicios",
+    "descripcion": "Compra de forma segura en tiendas online y marketplaces peruanos.",
+    "cursos": [
+      {
+        "nombre": "¿Dónde comprar online en Perú?",
+        "plataforma": "YouTube - Infobae",
+        "url": "https://www.infobae.com/america/peru/2022/10/28/donde-comprar-online-en-peru/",
+        "duracion": "20 minutos"
+      },
+      {
+        "nombre": "¿Cómo comprar por internet de forma segura?",
+        "plataforma": "PerúRetail",
+        "url": "https://www.peru-retail.com/como-comprar-por-internet-de-forma-segura/",
+        "duracion": "15 minutos"
+      }
+    ]
+  },
+  "p4": {
+    "tema": "Operaciones de banca electrónica y servicios financieros",
+    "descripcion": "Usa billeteras digitales, banca por internet y servicios financieros en línea.",
+    "cursos": [
+      {
+        "nombre": "Cómo crear tu cuenta Yape",
+        "plataforma": "Yape",
+        "url": "https://www.yape.com.pe/preguntas-frecuentes/crear-tu-cuenta-yape/como-crear-una-cuenta-en-yape",
+        "duracion": "30 minutos"
+      },
+      {
+        "nombre": "¿Qué es una billetera digital?",
+        "plataforma": "gob.pe",
+        "url": "https://www.gob.pe/14930-que-es-una-billetera-digital",
+        "duracion": "15 minutos"
+      }
+    ]
+  },
+  "p5": {
+    "tema": "Educación formal y actividades de capacitación",
+    "descripcion": "Aprovecha las mejores plataformas de estudio online para formarte desde casa.",
+    "cursos": [
+      {
+        "nombre": "Las mejores opciones para estudiar online",
+        "plataforma": "YouTube - ChicaGeek",
+        "url": "https://www.youtube.com/watch?v=Xx_iTN7HrNQ",
+        "duracion": "15 minutos"
+      },
+      {
+        "nombre": "10 tips para estudiar a distancia",
+        "plataforma": "Universidad Tecnológica del Perú",
+        "url": "https://www.utp.edu.pe/blog/tips-para-estudiar-distancia",
+        "duracion": "20 minutos"
+      }
+    ]
+  },
+  "p6": {
+    "tema": "Transacciones con organizaciones estatales / autoridades públicas",
+    "descripcion": "Realiza trámites y operaciones con entidades del Estado peruano desde internet.",
+    "cursos": [
+      {
+        "nombre": "Banca por Internet del Banco de la Nación",
+        "plataforma": "gob.pe",
+        "url": "https://www.gob.pe/81223-banca-por-internet-del-banco-de-la-nacion",
+        "duracion": "10 minutos"
+      },
+      {
+        "nombre": "Banca por Internet - Banco de la Nación",
+        "plataforma": "Banco de la Nación",
+        "url": "https://www.bn.com.pe/clientes/banca-internet/banca-internet.asp",
+        "duracion": "30 minutos"
+      }
+    ]
+  },
+  "p7": {
+    "tema": "Entretenimiento (videojuegos, películas, música, radio, periódico, etc.)",
+    "descripcion": "Descubre cómo aprovechar el entretenimiento digital de forma segura y responsable.",
+    "cursos": [
+      { 
+        "nombre": "Cómo divertirte en internet",
+        "plataforma": "WikiHow",
+        "url": "https://es.wikihow.com/divertirte-en-Internet",
+        "duracion": "20 minutos"
+      }
+    ]
+  },
+  "p8": {
+    "tema": "Vender productos y/o servicios (Mercado Libre, OLX, Facebook, etc.)",
+    "descripcion": "Aprende a vender online usando marketplaces y redes sociales.",
+    "cursos": [
+      {
+        "nombre": "Introducción al comercio electrónico: cómo vender por internet",
+        "plataforma": "YouTube - LearnFree en Español",
+        "url": "https://www.youtube.com/watch?v=Az5jqaC7INs&list=PLQVIjL9XTrQ1KYkwhdhdBi0PYYX5ELnoX",
+        "duracion": "7 horas"
+      },
+      {
+        "nombre": "¿Cómo vender en Facebook?",
+        "plataforma": "YouTube - LearnFree en Español",
+        "url": "https://www.youtube.com/watch?v=uKcHoyOYJpA&list=PLQVIjL9XTrQ0YwzmYXbbBKE1Xe_4QTUuv",
+        "duracion": "30 minutos"
+      },
+      {
+        "nombre": "¿Cómo vender en Instagram?",
+        "plataforma": "YouTube - LearnFree en Español",
+        "url": "https://www.youtube.com/watch?v=xMfRRdUz6f8&list=PLQVIjL9XTrQ0S_Q8EmGWwOPazibM3zbtq",
+        "duracion": "15 minutos"
+       }
+    ]
+  },
+  "p12": {
+    "tema": "Descarga de antivirus, aplicativos o software",
+    "descripcion": "Descarga software de forma segura y protege tus dispositivos con un buen antivirus.",
+    "cursos": [
+      {
+        "nombre": "Las mejores webs para bajar aplicaciones gratis de forma segura",
+        "plataforma": "Xataka Basics",
+        "url": "https://www.xataka.com/basics/mejores-webs-para-bajar-aplicaciones-gratis-otro-software-forma-segura",
+        "duracion": "15 minutos"
+      },
+      {
+        "nombre": "Cómo elegir un antivirus adecuado para proteger tu computadora",
+        "plataforma": "Entel",
+        "url": "https://www.entel.pe/noticias/elegir-antivirus",
+        "duracion": "15 minutos"
+      }
+    ]
+  }
+}

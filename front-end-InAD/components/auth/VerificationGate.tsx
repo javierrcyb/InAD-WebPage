@@ -2,11 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { CheckCircle2, Loader2, Mail } from 'lucide-react'
-import { createBrowserSupabaseClient } from '@/lib/supabase/client'
-import { loginWithGoogle, sendEmailOtp } from '@/lib/auth/verification'
+import { loginWithGoogle, sendEmailOtp, getCurrentUser } from '@/lib/auth/verification'
 
 type VerificationGateProps = {
-  onVerified: (user: { id: string; email: string; provider?: string, user_metadata?: Record<string, string> }) => void
+  onVerified: (user: { id: string; email: string; provider?: string; user_metadata?: Record<string, string> }) => void
 }
 
 export default function VerificationGate({ onVerified }: VerificationGateProps) {
@@ -15,41 +14,21 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
   const [error, setError] = useState('')
   const [busy, setBusy] = useState<'google' | 'email' | null>(null)
   const [linkSent, setLinkSent] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
 
+  // Al montar (y esto cubre el regreso desde /auth/callback), pregunta al servidor
   useEffect(() => {
-    const supabase = createBrowserSupabaseClient()
-
-    supabase.auth.getSession() // dispara el exchange si hay code en la URL
-
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (
-        (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') &&
-        session?.user
-      ) {
-        onVerified({
-          id: session.user.id,
-          email: session.user.email ?? '',
-          provider: session.user.identities?.[0]?.provider ?? session.user.app_metadata?.provider,
-          user_metadata: session.user.user_metadata as Record<string, string>,
-        })
-      }
-    })
-
-
-
-    return () => data.subscription.unsubscribe()
+    getCurrentUser()
+      .then((user) => {
+        if (user) onVerified(user)
+      })
+      .finally(() => setCheckingSession(false))
   }, [onVerified])
 
-  const handleGoogle = async () => {
+  const handleGoogle = () => {
     setError('')
     setBusy('google')
-
-    try {
-      await loginWithGoogle()
-    } catch (authError) {
-      setError(authError instanceof Error ? authError.message : 'No se pudo iniciar Google.')
-      setBusy(null)
-    }
+    loginWithGoogle() // navega fuera de la SPA, no hay callback que manejar aquí
   }
 
   const handleSendEmail = async () => {
@@ -65,7 +44,6 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
 
     try {
       const { error: sendError } = await sendEmailOtp(trimmedEmail)
-
       if (sendError) throw sendError
 
       setLinkSent(true)
@@ -76,6 +54,8 @@ export default function VerificationGate({ onVerified }: VerificationGateProps) 
       setBusy(null)
     }
   }
+
+  if (checkingSession) return null // o un spinner breve
 
   return (
     <section
